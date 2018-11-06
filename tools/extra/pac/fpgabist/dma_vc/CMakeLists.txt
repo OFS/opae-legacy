@@ -35,7 +35,7 @@ file(GLOB CSources *.c *.S)
 add_executable(fpga_dma_vc_test ${CSources})
 set_install_rpath(fpga_dma_vc_test)
 
-target_link_libraries(fpga_dma_vc_test opae-c ${libjson-c_LIBRARIES} uuid rt hwloc ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(fpga_dma_vc_test opae-c ${libjson-c_LIBRARIES} uuid rt ${HWLOC_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS fpga_dma_vc_test
         RUNTIME DESTINATION bin
