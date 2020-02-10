@@ -24,9 +24,6 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-#include_directories(${OPAE_INCLUDE_DIR}
-#                    ${OPAE_SDK_SOURCE}/tools/extra/c++utils)
-
 opae_add_shared_library(TARGET hssi-io
     SOURCE
         przone.h
@@ -56,6 +53,11 @@ opae_add_shared_library(TARGET hssi-io
     SOVERSION ${OPAE_VERSION_MAJOR}
 )
 
+target_include_directories(hssi-io
+    PRIVATE
+        ${OPAE_SDK_SOURCE}/tools/extra/c++utils
+)
+
 opae_add_executable(TARGET hssi_loopback
     SOURCE
         loopback_main.cpp
@@ -73,6 +75,11 @@ opae_add_executable(TARGET hssi_loopback
         hssi-io
 )
 
+target_include_directories(hssi_loopback
+    PRIVATE
+        ${OPAE_SDK_SOURCE}/tools/extra/c++utils
+)
+
 opae_add_executable(TARGET hssi_config
     SOURCE
         config_main.cpp
@@ -80,6 +87,11 @@ opae_add_executable(TARGET hssi_config
         config_app.cpp
     LIBS
         hssi-io
+)
+
+target_include_directories(hssi_config
+    PRIVATE
+        ${OPAE_SDK_SOURCE}/tools/extra/c++utils
 )
 
 install(TARGETS hssi-io
