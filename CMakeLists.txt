@@ -28,5 +28,7 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(opae-legacy)
 
+set(OPAE_LEGACY_ROOT ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "Root directory of opae-legacy project" FORCE)
+
 add_subdirectory(tools)
 #add_subdirectory(tests)

@@ -39,6 +39,13 @@ opae_add_shared_library(TARGET fpgad-api
     SOVERSION ${OPAE_VERSION_MAJOR}
 ) 
 
+target_include_directories(fpgad-api
+    PRIVATE
+        ${OPAE_LEGACY_ROOT}/tools
+        ${OPAE_LIBS_ROOT}/libopae-c
+        ${OPAE_LIBS_ROOT}/libbitstream
+)
+
 #target_include_directories(fpgad-api PUBLIC
 #  $<BUILD_INTERFACE:${OPAE_INCLUDE_DIR}>
 #  $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>

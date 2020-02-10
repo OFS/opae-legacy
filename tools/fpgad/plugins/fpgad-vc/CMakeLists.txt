@@ -35,14 +35,12 @@ opae_add_module_library(TARGET fpgad-vc
         ${libjson-c_LIBRARIES}
 )
 
-#target_include_directories(fpgad-vc PUBLIC
-#  $<BUILD_INTERFACE:${OPAE_INCLUDE_DIR}>
-#  $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
-#  PRIVATE ${OPAE_SDK_SOURCE}/libopae
-#  PRIVATE ${OPAE_SDK_SOURCE}/libbitstream
-#  PRIVATE ${OPAE_SDK_SOURCE}/tools/base
-#  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-#  PUBLIC ${libjson-c_INCLUDE_DIRS})
+target_include_directories(fpgad-vc
+    PRIVATE
+        ${OPAE_LEGACY_ROOT}/tools
+        ${OPAE_LIBS_ROOT}/libopae-c
+        ${OPAE_LIBS_ROOT}/libbitstream
+)
 
 install(TARGETS fpgad-vc
     LIBRARY DESTINATION ${OPAE_LIB_INSTALL_DIR}
