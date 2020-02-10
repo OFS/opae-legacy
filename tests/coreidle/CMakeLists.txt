@@ -24,11 +24,24 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 2.8.12)
+opae_test_add_static_lib(TARGET coreidle-static
+    SOURCE
+        ${OPAE_LEGACY_ROOT}/tools/coreidle/coreidle.c
+        ${OPAE_LEGACY_ROOT}/tools/coreidle/main.c
+)
 
-project(opae-legacy)
+target_compile_definitions(coreidle-static
+    PRIVATE main=coreidle_main)
 
-set(OPAE_LEGACY_ROOT ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "Root directory of opae-legacy project" FORCE)
+opae_test_add(TARGET test_coreidle_coreidle_c
+    SOURCE test_coreidle_c.cpp
+    LIBS coreidle-static
+)
 
-add_subdirectory(tools)
-add_subdirectory(tests)
+opae_test_add(TARGET test_coreidle_main_c
+    SOURCE test_main_c.cpp
+    LIBS
+        coreidle-static
+        bitstream
+        ${libjson-c_LIBRARIES}
+)
