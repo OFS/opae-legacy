@@ -1,4 +1,4 @@
-## Copyright(c) 2019, Intel Corporation
+## Copyright(c) 2019-2020, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -26,39 +26,24 @@
 
 project(libfpgad-vc)
 
-set(SRC
-  fpgad-vc.c
+opae_add_module_library(TARGET fpgad-vc
+    SOURCE fpgad-vc.c
+    LIBS
+        safestr
+        opae-c
+        fpgad-api
+        ${libjson-c_LIBRARIES}
 )
 
-add_library(fpgad-vc MODULE ${SRC})
-
-target_include_directories(fpgad-vc PUBLIC
-  $<BUILD_INTERFACE:${OPAE_INCLUDE_DIR}>
-  $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
-  PRIVATE ${OPAE_SDK_SOURCE}/libopae
-  PRIVATE ${OPAE_SDK_SOURCE}/libbitstream
-  PRIVATE ${OPAE_SDK_SOURCE}/tools/base
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-  PUBLIC ${libjson-c_INCLUDE_DIRS})
-
-# Add coverage flags
-if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
-  set_property(SOURCE ${SRC} APPEND PROPERTY COMPILE_FLAGS ${GCOV_COMPILE_FLAGS})
-  target_link_libraries(fpgad-vc ${GCOV_LINK_FLAGS})
-endif(CMAKE_BUILD_TYPE STREQUAL "Coverage")
-
-# Target properties
-set_property(TARGET fpgad-vc PROPERTY C_STANDARD 99)
-
-target_link_libraries(fpgad-vc
-  safestr
-  opae-c
-  fpgad-api
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${libjson-c_LIBRARIES})
-
-set(CMAKE_C_FLAGS "-DHAVE_CONFIG_H ${CMAKE_C_FLAGS} -pthread")
+#target_include_directories(fpgad-vc PUBLIC
+#  $<BUILD_INTERFACE:${OPAE_INCLUDE_DIR}>
+#  $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+#  PRIVATE ${OPAE_SDK_SOURCE}/libopae
+#  PRIVATE ${OPAE_SDK_SOURCE}/libbitstream
+#  PRIVATE ${OPAE_SDK_SOURCE}/tools/base
+#  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+#  PUBLIC ${libjson-c_INCLUDE_DIRS})
 
 install(TARGETS fpgad-vc
-  LIBRARY DESTINATION ${OPAE_LIB_INSTALL_DIR}
-  COMPONENT toolfpgad_vc)
+    LIBRARY DESTINATION ${OPAE_LIB_INSTALL_DIR}
+    COMPONENT toolfpgad_vc)

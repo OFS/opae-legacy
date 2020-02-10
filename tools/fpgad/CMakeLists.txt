@@ -1,4 +1,4 @@
-## Copyright(c) 2017-2019, Intel Corporation
+## Copyright(c) 2017-2020, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -28,39 +28,26 @@ add_subdirectory(api)
 add_subdirectory(plugins/fpgad-xfpga)
 add_subdirectory(plugins/fpgad-vc)
 
-include_directories(${OPAE_INCLUDE_DIR}
-                    ${libjson-c_INCLUDE_DIRS}
-		    ${CMAKE_BINARY_DIR}/include
-		    ${OPAE_SDK_SOURCE}/libopae
-                    ${OPAE_SDK_SOURCE}/libbitstream
-                    ${OPAE_SDK_SOURCE}/tools/base)
-
-set(SRC
-  command_line.c
-  config_file.c
-  event_dispatcher_thread.c
-  events_api_thread.c
-  fpgad.c
-  monitor_thread.c
-  daemonize.c
-  monitored_device.c
+opae_add_executable(TARGET fpgad
+    SOURCE
+        command_line.c
+        config_file.c
+        event_dispatcher_thread.c
+        events_api_thread.c
+        fpgad.c
+        monitor_thread.c
+        daemonize.c
+        monitored_device.c
+    LIBS
+        safestr
+        opae-c
+        bitstream
+        fpgad-api
+        dl
+        rt
+        ${libjson-c_LIBRARIES}
+        ${libuuid_LIBRARIES}
 )
-add_executable(fpgad ${SRC})
-
-set_install_rpath(fpgad)
-
-target_link_libraries(fpgad
-  safestr
-  opae-c
-  bitstream
-  fpgad-api
-  dl
-  rt
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${libjson-c_LIBRARIES}
-  uuid)
-
-set(CMAKE_C_FLAGS "-DHAVE_CONFIG_H ${CMAKE_C_FLAGS} -pthread")
 
 configure_file(fpgad.service.in fpgad.service @ONLY NEWLINE_STYLE UNIX)
 
@@ -90,4 +77,3 @@ else()
   install(FILES fpgad.cfg DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/opae COMPONENT toolfpgad)
   install(FILES fpgad.conf DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/sysconfig COMPONENT toolfpgad)
 endif()
-

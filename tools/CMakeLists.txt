@@ -1,4 +1,4 @@
-## Copyright(c) 2018-2020, Intel Corporation
+## Copyright(c) 2020, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -24,26 +24,6 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-project(libfpgad-xfpga)
-
-opae_add_module_library(TARGET fpgad-xfpga
-    SOURCE fpgad-xfpga.c
-    LIBS
-        safestr
-        opae-c
-        fpgad-api
-        ${libjson-c_LIBRARIES}
-)
-
-#target_include_directories(fpgad-xfpga PUBLIC
-#  $<BUILD_INTERFACE:${OPAE_INCLUDE_DIR}>
-#  $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
-#  PRIVATE ${OPAE_SDK_SOURCE}/libopae
-#  PRIVATE ${OPAE_SDK_SOURCE}/libbitstream
-#  PRIVATE ${OPAE_SDK_SOURCE}/tools/base
-#  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-#  PUBLIC ${libjson-c_INCLUDE_DIRS})
-
-install(TARGETS fpgad-xfpga
-    LIBRARY DESTINATION ${OPAE_LIB_INSTALL_DIR}
-    COMPONENT toolfpgad_xfpga)
+add_subdirectory(coreidle)
+add_subdirectory(fpgad)
+add_subdirectory(hssi)
