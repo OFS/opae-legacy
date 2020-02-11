@@ -58,6 +58,12 @@ target_include_directories(hssi-io
         ${OPAE_SDK_SOURCE}/tools/extra/c++utils
 )
 
+set_target_properties(hssi-io
+    PROPERTIES
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO)
+
 opae_add_executable(TARGET hssi_loopback
     SOURCE
         loopback_main.cpp
@@ -80,6 +86,12 @@ target_include_directories(hssi_loopback
         ${OPAE_SDK_SOURCE}/tools/extra/c++utils
 )
 
+set_target_properties(hssi_loopback
+    PROPERTIES
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO)
+
 opae_add_executable(TARGET hssi_config
     SOURCE
         config_main.cpp
@@ -93,6 +105,12 @@ target_include_directories(hssi_config
     PRIVATE
         ${OPAE_SDK_SOURCE}/tools/extra/c++utils
 )
+
+set_target_properties(hssi_config
+    PROPERTIES
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO)
 
 install(TARGETS hssi-io
     LIBRARY DESTINATION ${OPAE_LIB_INSTALL_DIR}
