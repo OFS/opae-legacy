@@ -37,7 +37,7 @@ opae_add_module_library(TARGET fpgad-xfpga
 
 target_include_directories(fpgad-xfpga
     PRIVATE
-        ${OPAE_LEGACY_ROOT}/tools
+        ${opae-legacy_ROOT}/tools
         ${OPAE_LIBS_ROOT}/libopae-c
         ${OPAE_LIBS_ROOT}/libbitstream
 )

@@ -37,7 +37,7 @@ opae_add_module_library(TARGET fpgad-vc
 
 target_include_directories(fpgad-vc
     PRIVATE
-        ${OPAE_LEGACY_ROOT}/tools
+        ${opae-legacy_ROOT}/tools
         ${OPAE_LIBS_ROOT}/libopae-c
         ${OPAE_LIBS_ROOT}/libbitstream
 )

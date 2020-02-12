@@ -41,19 +41,10 @@ opae_add_shared_library(TARGET fpgad-api
 
 target_include_directories(fpgad-api
     PRIVATE
-        ${OPAE_LEGACY_ROOT}/tools
+        ${opae-legacy_ROOT}/tools
         ${OPAE_LIBS_ROOT}/libopae-c
         ${OPAE_LIBS_ROOT}/libbitstream
 )
-
-#target_include_directories(fpgad-api PUBLIC
-#  $<BUILD_INTERFACE:${OPAE_INCLUDE_DIR}>
-#  $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
-#  PRIVATE ${OPAE_SDK_SOURCE}/libopae
-#  PRIVATE ${OPAE_SDK_SOURCE}/libbitstream
-#  PRIVATE ${OPAE_SDK_SOURCE}/tools/base
-#  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-#  PUBLIC ${libjson-c_INCLUDE_DIRS})
 
 install(TARGETS fpgad-api
   LIBRARY DESTINATION ${OPAE_LIB_INSTALL_DIR}

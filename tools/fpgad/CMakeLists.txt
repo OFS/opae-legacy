@@ -53,7 +53,7 @@ target_include_directories(fpgad
     PRIVATE
         ${OPAE_LIBS_ROOT}/libopae-c
         ${OPAE_LIBS_ROOT}/libbitstream
-        ${OPAE_LEGACY_ROOT}/tools
+        ${opae-legacy_ROOT}/tools
 )
 
 configure_file(fpgad.service.in fpgad.service @ONLY NEWLINE_STYLE UNIX)
