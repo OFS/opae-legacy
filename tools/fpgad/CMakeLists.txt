@@ -47,6 +47,7 @@ opae_add_executable(TARGET fpgad
         rt
         ${libjson-c_LIBRARIES}
         ${libuuid_LIBRARIES}
+    COMPONENT toolfpgad
 )
 
 target_include_directories(fpgad
@@ -57,10 +58,6 @@ target_include_directories(fpgad
 )
 
 configure_file(fpgad.service.in fpgad.service @ONLY NEWLINE_STYLE UNIX)
-
-install(TARGETS fpgad
-        RUNTIME DESTINATION bin
-        COMPONENT toolfpgad)
 
 if ("${CPACK_GENERATOR}" STREQUAL "RPM")
 

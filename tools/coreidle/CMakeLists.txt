@@ -35,8 +35,5 @@ opae_add_executable(TARGET coreidle
         opae-c
         ${libjson-c_LIBRARIES}
         ${libuuid_LIBRARIES}
+    COMPONENT toolcoreidle
 )
-
-install(TARGETS coreidle
-        RUNTIME DESTINATION bin
-        COMPONENT toolcoreidle)

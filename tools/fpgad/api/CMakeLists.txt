@@ -24,8 +24,6 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-project(libfpgad-api)
-
 opae_add_shared_library(TARGET fpgad-api
     SOURCE
         logging.c
@@ -37,6 +35,7 @@ opae_add_shared_library(TARGET fpgad-api
         ${libjson-c_LIBRARIES}
     VERSION ${OPAE_VERSION}
     SOVERSION ${OPAE_VERSION_MAJOR}
+    COMPONENT toolfpgad_api
 ) 
 
 target_include_directories(fpgad-api
@@ -45,7 +44,3 @@ target_include_directories(fpgad-api
         ${OPAE_LIBS_ROOT}/libopae-c
         ${OPAE_LIBS_ROOT}/libbitstream
 )
-
-install(TARGETS fpgad-api
-  LIBRARY DESTINATION ${OPAE_LIB_INSTALL_DIR}
-  COMPONENT toolfpgad_api)

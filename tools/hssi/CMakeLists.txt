@@ -51,6 +51,7 @@ opae_add_shared_library(TARGET hssi-io
         opae-c++-utils
     VERSION ${OPAE_VERSION}
     SOVERSION ${OPAE_VERSION_MAJOR}
+    COMPONENT hssiiolib
 )
 
 target_include_directories(hssi-io
@@ -79,6 +80,7 @@ opae_add_executable(TARGET hssi_loopback
         e100.cpp
     LIBS
         hssi-io
+    COMPONENT hssiprograms
 )
 
 target_include_directories(hssi_loopback
@@ -99,6 +101,7 @@ opae_add_executable(TARGET hssi_config
         config_app.cpp
     LIBS
         hssi-io
+    COMPONENT hssiprograms
 )
 
 target_include_directories(hssi_config
@@ -111,11 +114,3 @@ set_target_properties(hssi_config
         CXX_STANDARD 11
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO)
-
-install(TARGETS hssi-io
-    LIBRARY DESTINATION ${OPAE_LIB_INSTALL_DIR}
-    COMPONENT hssiiolib)
-
-install(TARGETS hssi_config hssi_loopback
-    RUNTIME DESTINATION bin
-    COMPONENT hssiprograms)

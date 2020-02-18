@@ -24,8 +24,6 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-project(libfpgad-xfpga)
-
 opae_add_module_library(TARGET fpgad-xfpga
     SOURCE fpgad-xfpga.c
     LIBS
@@ -33,6 +31,7 @@ opae_add_module_library(TARGET fpgad-xfpga
         opae-c
         fpgad-api
         ${libjson-c_LIBRARIES}
+    COMPONENT toolfpgad_xfpga
 )
 
 target_include_directories(fpgad-xfpga
@@ -41,7 +40,3 @@ target_include_directories(fpgad-xfpga
         ${OPAE_LIBS_ROOT}/libopae-c
         ${OPAE_LIBS_ROOT}/libbitstream
 )
-
-install(TARGETS fpgad-xfpga
-    LIBRARY DESTINATION ${OPAE_LIB_INSTALL_DIR}
-    COMPONENT toolfpgad_xfpga)

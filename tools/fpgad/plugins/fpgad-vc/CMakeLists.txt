@@ -24,8 +24,6 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-project(libfpgad-vc)
-
 opae_add_module_library(TARGET fpgad-vc
     SOURCE fpgad-vc.c
     LIBS
@@ -33,6 +31,7 @@ opae_add_module_library(TARGET fpgad-vc
         opae-c
         fpgad-api
         ${libjson-c_LIBRARIES}
+    COMPONENT toolfpgad_vc
 )
 
 target_include_directories(fpgad-vc
@@ -41,7 +40,3 @@ target_include_directories(fpgad-vc
         ${OPAE_LIBS_ROOT}/libopae-c
         ${OPAE_LIBS_ROOT}/libbitstream
 )
-
-install(TARGETS fpgad-vc
-    LIBRARY DESTINATION ${OPAE_LIB_INSTALL_DIR}
-    COMPONENT toolfpgad_vc)
