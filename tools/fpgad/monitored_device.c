@@ -107,11 +107,7 @@ allocate_monitored_device(struct fpgad_config *config,
 STATIC void *mon_find_plugin(const char *libpath)
 {
 	char plugin_path[PATH_MAX];
-	const char *search_paths[] = {
-		"/usr/lib64/opae/",
-		"/usr/lib/opae/",
-		""
-	};
+	const char *search_paths[] = { OPAE_MODULE_SEARCH_PATHS };
 	unsigned i;
 	void *dl_handle;
 
