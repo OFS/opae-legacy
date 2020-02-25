@@ -60,8 +60,7 @@ struct option longopts[] = {
 };
 
 // coreidle Command line struct
-struct  CoreIdleCommandLine
-{
+struct CoreIdleCommandLine {
 	int      segment;
 	int      bus;
 	int      device;
@@ -71,11 +70,12 @@ struct  CoreIdleCommandLine
 	opae_bitstream_info bitstr;
 };
 
-struct CoreIdleCommandLine coreidleCmdLine =
-{ -1, -1, -1, -1, -1, { 0, }, OPAE_BITSTREAM_INFO_INITIALIZER };
+struct CoreIdleCommandLine coreidleCmdLine = {
+	-1, -1, -1, -1, -1, { 0, }, OPAE_BITSTREAM_INFO_INITIALIZER
+};
 
 // core idle Command line input help
-void CoreidleAppShowHelp()
+void CoreidleAppShowHelp(void)
 {
 	printf("Usage:\n");
 	printf("coreidle\n");
@@ -114,7 +114,7 @@ void print_err(const char *s, fpga_result res)
 
 int ParseCmds(struct CoreIdleCommandLine *coreidleCmdLine, int argc, char *argv[]);
 fpga_result get_fpga_interface_id(fpga_token token, fpga_guid *interface_id);
-extern fpga_result set_cpu_core_idle(fpga_handle handle,uint64_t gbs_power);
+extern fpga_result set_cpu_core_idle(fpga_handle handle, uint64_t gbs_power);
 
 int main(int argc, char *argv[])
 {
@@ -128,10 +128,10 @@ int main(int argc, char *argv[])
 	int power                          = 0;
 
 	// Parse command line
-	if ( argc < 2 ) {
+	if (argc < 2) {
 		CoreidleAppShowHelp();
 		return 1;
-	} else if ( 0!= ParseCmds(&coreidleCmdLine, argc, argv) ) {
+	} else if (0 != ParseCmds(&coreidleCmdLine, argc, argv)) {
 		return 2;
 	}
 
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 	result = opae_load_bitstream(coreidleCmdLine.filename,
 				     &coreidleCmdLine.bitstr);
 	if (result != FPGA_OK) {
-                res = result;
+		res = result;
 		ON_ERR_GOTO(res, out_exit, "Invalid Input bitstream");
 	}
 
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
 		ON_ERR_GOTO(result, out_destroy_prop, "setting segment");
 	}
 
-	if (coreidleCmdLine.bus > 0){
+	if (coreidleCmdLine.bus > 0) {
 		result = fpgaPropertiesSetBus(filter, coreidleCmdLine.bus);
 		ON_ERR_GOTO(result, out_destroy_prop, "setting bus");
 	}
@@ -175,17 +175,17 @@ int main(int argc, char *argv[])
 		ON_ERR_GOTO(result, out_destroy_prop, "setting device");
 	}
 
-	if (coreidleCmdLine.function > 0){
+	if (coreidleCmdLine.function > 0) {
 		result = fpgaPropertiesSetFunction(filter, coreidleCmdLine.function);
 		ON_ERR_GOTO(result, out_destroy_prop, "setting function");
 	}
 
-	if (coreidleCmdLine.socket > 0){
+	if (coreidleCmdLine.socket > 0) {
 		result = fpgaPropertiesSetSocketID(filter, coreidleCmdLine.socket);
 		ON_ERR_GOTO(result, out_destroy_prop, "setting socket");
 	}
 
-	result = fpgaEnumerate(&filter, 1, &fme_token,1, &num_matches);
+	result = fpgaEnumerate(&filter, 1, &fme_token, 1, &num_matches);
 	ON_ERR_GOTO(result, out_destroy_prop, "enumerating FPGAs");
 
 	if (num_matches < 1) {
@@ -253,22 +253,22 @@ int ParseCmds(struct CoreIdleCommandLine *coreidleCmdLine,
 	int option_index   = 0;
 	char *endptr       = NULL;
 
-	while( -1 != ( getopt_ret = getopt_long(argc, argv,
-			GETOPT_STRING, longopts, &option_index))){
+	while (-1 != (getopt_ret = getopt_long(argc, argv,
+			GETOPT_STRING, longopts, &option_index))) {
 		const char *tmp_optarg = optarg;
 
-		if((optarg) &&
-		   ('=' == *tmp_optarg)){
+		if ((optarg) &&
+		   ('=' == *tmp_optarg)) {
 			++tmp_optarg;
 		}
 
-		if((!optarg) && (optind < argc) &&
+		if ((!optarg) && (optind < argc) &&
 		   (NULL != argv[optind]) &&
-		   ('-' != argv[optind][0]) ) {
+		   ('-' != argv[optind][0])) {
 			tmp_optarg = argv[optind++];
 		}
 
-		switch(getopt_ret){
+		switch (getopt_ret) {
 		case 'h':
 			// Command line help
 			CoreidleAppShowHelp();
