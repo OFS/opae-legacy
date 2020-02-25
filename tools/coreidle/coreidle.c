@@ -119,7 +119,7 @@ int readmsr(int split_point, uint64_t msr, uint64_t *value)
 	char data[MSR_MAX_BUF_SIZE]     = {0};
 	char msr_cmd[MSR_MAX_BUF_SIZE]  = {0};
 
-	if(value == NULL) {
+	if (value == NULL) {
 		return -1;
 	}
 
@@ -262,9 +262,9 @@ fpga_result set_cpu_core_idle(fpga_handle handle,
 	cpu_num = sysconf(_SC_NPROCESSORS_ONLN);
 
 	// Socket count
-	if (cores_num > 0  && threads_per_core >0 ) {
+	if (cores_num > 0  && threads_per_core > 0) {
 		socket_num = cpu_num / threads_per_core / cores_num;
-	} else  {
+	} else {
 		OPAE_ERR("Invalid socket count");
 		result = FPGA_NOT_SUPPORTED;
 		return result;
@@ -273,7 +273,7 @@ fpga_result set_cpu_core_idle(fpga_handle handle,
 	// Split point
 	if (socketid == 0) {
 		split_point = 0;
-	}else {
+	} else {
 		split_point = cpu_num / socket_num;
 	}
 
@@ -308,7 +308,7 @@ fpga_result set_cpu_core_idle(fpga_handle handle,
 		return result;
 	}
 
-	//Shared TDP SKU 
+	//Shared TDP SKU
 	if (xeon_pwr_limit + fpga_pwr_limit > total_power) {
 
 		printf("Shared TDP SKU power shared between XEON and FPGA \n");
@@ -347,7 +347,7 @@ fpga_result set_cpu_core_idle(fpga_handle handle,
 }
 
 // get Package power
-fpga_result get_package_power( int split_point,
+fpga_result get_package_power(int split_point,
 			long double *pkg_power)
 {
 	uint64_t pkg_pwr_limit          = 0;
@@ -391,7 +391,7 @@ fpga_result get_package_power( int split_point,
 }
 
 // sets cpu affinity
-fpga_result setaffinity(cpu_set_t * idle_set,
+fpga_result setaffinity(cpu_set_t *idle_set,
 			int socket,
 			int pid,
 			int split_point)
@@ -410,10 +410,10 @@ fpga_result setaffinity(cpu_set_t * idle_set,
 		goto setafy_exit;
 	}
 
-	if (sched_getaffinity(pid, sizeof(current_set), &current_set) != 0){
+	if (sched_getaffinity(pid, sizeof(current_set), &current_set) != 0) {
 
 		// PID may not exists in system
-		if(pid >2) {
+		if (pid > 2) {
 			goto setafy_exit;
 		}
 
@@ -425,16 +425,16 @@ fpga_result setaffinity(cpu_set_t * idle_set,
 	for (i = 0; i < split_point; i++) {
 		if (socket == 0) {
 			CPU_CLR(i, &current_set);
-		}else {
+		} else {
 			CPU_CLR(i + split_point, &current_set);
 		}
 	}
 
 	CPU_OR(&full_mask_set, &current_set, idle_set);
 
-	if (sched_setaffinity(pid, sizeof(full_mask_set), &full_mask_set) != 0){
+	if (sched_setaffinity(pid, sizeof(full_mask_set), &full_mask_set) != 0) {
 
-		if(pid >2) {
+		if (pid > 2) {
 			goto setafy_exit;
 		}
 
@@ -491,7 +491,7 @@ fpga_result cpuset_setaffinity(int socket,
 	// Get affinity of pid 1
 	// Change CPU set
 	// Set affinity of pid 1
-	result = setaffinity(&idle_set,socket,1,split_point);
+	result = setaffinity(&idle_set, socket, 1, split_point);
 	if (result != FPGA_OK) {
 		OPAE_ERR(" sched_setaffinity failure for pid: 1\n");
 		return result;
@@ -500,7 +500,7 @@ fpga_result cpuset_setaffinity(int socket,
 	// Get affinity of pid 2
 	// Change CPU set
 	// Set affinity of pid 2
-	result = setaffinity(&idle_set,socket,2,split_point);
+	result = setaffinity(&idle_set, socket, 2, split_point);
 	if (result != FPGA_OK) {
 		OPAE_ERR(" sched_setaffinity failure for pid: 1\n");
 		return result;
@@ -509,11 +509,11 @@ fpga_result cpuset_setaffinity(int socket,
 	// Find max pid number
 	result = sysfs_read_u64(SYFS_PID_MAX_PATH, &max_pid_index);
 	if (result != FPGA_OK) {
-		OPAE_ERR("Failed  to read max pid count.\n");
+		OPAE_ERR("Failed to read max pid count.\n");
 		return result;
 	}
 
-	OPAE_DBG("max_pid_index: %d\n",max_pid_index);
+	OPAE_DBG("max_pid_index: %d\n", max_pid_index);
 
 	// Get affinity from pid 3 to Max pid count
 	// Change CPU set
@@ -524,8 +524,7 @@ fpga_result cpuset_setaffinity(int socket,
 	OPAE_DBG("Set affinity for all possible pids to mask in cpuset ");
 
 	for (pid = 3; pid < max_pid_index; pid++) {
-
-		setaffinity(&idle_set,socket,pid,split_point);
+		setaffinity(&idle_set, socket, pid, split_point);
 	}
 
 	return result;
