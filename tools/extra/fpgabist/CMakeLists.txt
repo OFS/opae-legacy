@@ -24,31 +24,29 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-opae_add_shared_library(TARGET opae-c++-utils
-    SOURCE
-        utils.h
-        utils.cpp
-        cmd_handler.h
-        cmd_handler.cpp
-        log.h
-        log.cpp
-        option.h
-        option_map.h
-        option_map.cpp
-        option_parser.h
-        option_parser.cpp
-    LIBS
-        safestr
-        opae-c
-        ${libjson-c_LIBRARIES}
-    VERSION ${OPAE_VERSION}
-    SOVERSION ${OPAE_VERSION_MAJOR}
-    COMPONENT opaecxxutils
-)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+    "${OPAE_SDK_SOURCE}/opae-libs/cmake/modules")
+include(FindHwloc)
 
-set_target_properties(opae-c++-utils
-    PROPERTIES
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED YES
-        CXX_EXTENSIONS NO
-)
+#TODO: Edit the code dependencies here
+set(PYTHON_SRC
+     bist_app.py
+     bist_common.py
+     bist_def.py
+     bist_dma.py
+     bist_nlb0.py
+     bist_nlb3.py
+     fpgabist)
+
+if(TBB_FOUND)
+  add_subdirectory(dma)
+else(TBB_FOUND)
+  message(WARNING "Thread Building Blocks not found: not building fpgabist/dma.")
+endif(TBB_FOUND)
+
+add_subdirectory(dma_vc)
+add_subdirectory(bist)
+
+install(PROGRAMS ${PYTHON_SRC}
+    DESTINATION bin
+    COMPONENT toolfpgabist)

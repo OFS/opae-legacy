@@ -24,31 +24,37 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-opae_add_shared_library(TARGET opae-c++-utils
-    SOURCE
-        utils.h
-        utils.cpp
-        cmd_handler.h
-        cmd_handler.cpp
-        log.h
-        log.cpp
-        option.h
-        option_map.h
-        option_map.cpp
-        option_parser.h
-        option_parser.cpp
+enable_language(C ASM)
+
+set(ASM_OPTIONS "-x assembler-with-cpp")
+set(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}")
+
+file(GLOB CSources *.cpp *.S)
+opae_add_executable(TARGET fpga_dma_test
+    SOURCE ${CSources}
     LIBS
+        rt
         safestr
         opae-c
+        ${TBB_LIBRARIES}
+        ${HWLOC_LIBRARIES}
         ${libjson-c_LIBRARIES}
-    VERSION ${OPAE_VERSION}
-    SOVERSION ${OPAE_VERSION_MAJOR}
-    COMPONENT opaecxxutils
+    COMPONENT toolfpga_dma_test
 )
 
-set_target_properties(opae-c++-utils
+if (${CMAKE_C_COMPILER} MATCHES  "clang")
+    set_source_files_properties(x86-sse2.S  PROPERTIES COMPILE_FLAGS -fno-integrated-as)
+endif() 
+
+set_target_properties(fpga_dma_test
     PROPERTIES
         CXX_STANDARD 11
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
+)
+
+target_compile_definitions(fpga_dma_test
+    PRIVATE
+        FPGA_DMA_MAX_BLOCKS=256
+        FPGA_DMA_BLOCK_SIZE=64
 )

@@ -1,4 +1,4 @@
-## Copyright(c) 2017-2020, Intel Corporation
+## Copyright(c) 2018-2020, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -24,31 +24,11 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-opae_add_shared_library(TARGET opae-c++-utils
-    SOURCE
-        utils.h
-        utils.cpp
-        cmd_handler.h
-        cmd_handler.cpp
-        log.h
-        log.cpp
-        option.h
-        option_map.h
-        option_map.cpp
-        option_parser.h
-        option_parser.cpp
+opae_add_executable(TARGET fpgametrics
+    SOURCE fpgametrics.c
     LIBS
         safestr
         opae-c
         ${libjson-c_LIBRARIES}
-    VERSION ${OPAE_VERSION}
-    SOVERSION ${OPAE_VERSION_MAJOR}
-    COMPONENT opaecxxutils
-)
-
-set_target_properties(opae-c++-utils
-    PROPERTIES
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED YES
-        CXX_EXTENSIONS NO
+    COMPONENT toolfpgametrics
 )
