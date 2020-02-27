@@ -103,7 +103,6 @@ extern void *fpgad_xfpga_fme_response_contexts[1];
 
 #include <config.h>
 #include <opae/fpga.h>
-#include "safe_string/safe_string.h"
 
 #include <array>
 #include <vector>

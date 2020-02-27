@@ -40,7 +40,6 @@
 #include <fcntl.h>
 #include <linux/limits.h>
 
-#include "safe_string/safe_string.h"
 #include <opae/fpga.h>
 #include <libbitstream/bitstream.h>
 #include <libbitstream/metadatav1.h>
