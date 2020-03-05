@@ -315,18 +315,10 @@ int ParseCmds(struct CoreIdleCommandLine *coreidleCmdLine,
 			break;
 
 		case 'G': {
-			errno_t e;
 			// Bitstream GBS
 			if (!tmp_optarg)
 				return -1;
-			e = strncpy_s(coreidleCmdLine->filename,
-					sizeof(coreidleCmdLine->filename),
-					tmp_optarg,
-					MAX_CMD_OPT);
-			if (EOK != e) {
-				printf("strncpy_s failed.\n");
-				return -1;
-			}
+			strncpy(coreidleCmdLine->filename, tmp_optarg, MAX_CMD_OPT);
 			coreidleCmdLine->filename[sizeof(coreidleCmdLine->filename)-1] = 0;
 			} break;
 

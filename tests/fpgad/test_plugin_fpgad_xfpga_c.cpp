@@ -163,7 +163,7 @@ class mock_port_fpgad_xfpga_c_p : public ::testing::TestWithParam<std::string> {
   void init_monitored_device(fpgad_monitored_device *d,
                              fpgad_supported_device *s)
   {
-    memset_s(d, sizeof(fpgad_monitored_device), 0);
+    memset(d, 0, sizeof(fpgad_monitored_device));
     d->token = tokens_[0];
     d->object_type = FPGA_ACCELERATOR;
     d->num_error_occurrences = 0;
@@ -409,7 +409,7 @@ TEST_P(mock_port_fpgad_xfpga_c_p, AP6) {
   init_monitored_device(&d, &s);
 
   opae_bitstream_info binfo;
-  memset_s(&binfo, sizeof(opae_bitstream_info), 0);
+  memset(&binfo, 0, sizeof(opae_bitstream_info));
   binfo.filename = (char *)"null.gbs";
   binfo.data = bitstream_.data();
   binfo.data_len = bitstream_.size();
@@ -514,7 +514,7 @@ class mock_fme_fpgad_xfpga_c_p : public ::testing::TestWithParam<std::string> {
   void init_monitored_device(fpgad_monitored_device *d,
                              fpgad_supported_device *s)
   {
-    memset_s(d, sizeof(fpgad_monitored_device), 0);
+    memset(d, 0, sizeof(fpgad_monitored_device));
     d->token = tokens_[0];
     d->object_type = FPGA_DEVICE;
     d->num_error_occurrences = 0;

@@ -56,19 +56,13 @@ fpgad_supported_device default_supported_devices_table[] = {
 STATIC fpgad_supported_device *mon_is_loaded(struct fpgad_config *c,
 					     const char *library_path)
 {
-	errno_t err;
 	unsigned i;
 	int res = 0;
 
 	for (i = 0 ; c->supported_devices[i].library_path ; ++i) {
 		fpgad_supported_device *d = &c->supported_devices[i];
 
-		err = strcmp_s(library_path, PATH_MAX,
-				d->library_path, &res);
-		if (err) {
-			LOG("strcmp_s failed, skipping");
-			continue;
-		}
+		res = strcmp(library_path, d->library_path);
 
 		if (!res && (d->flags & FPGAD_DEV_LOADED))
 			return d;
@@ -114,7 +108,7 @@ STATIC void *mon_find_plugin(const char *libpath)
 	for (i = 0 ;
 		i < sizeof(search_paths) / sizeof(search_paths[0]) ;
 		++i) {
-		snprintf_s_ss(plugin_path, sizeof(plugin_path),
+		snprintf(plugin_path, sizeof(plugin_path),
 				"%s%s", search_paths[i], libpath);
 
 		dl_handle = dlopen(plugin_path, RTLD_LAZY|RTLD_LOCAL);

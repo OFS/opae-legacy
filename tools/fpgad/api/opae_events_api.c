@@ -28,6 +28,8 @@
 #include <config.h>
 #endif // HAVE_CONFIG_H
 
+#include <inttypes.h>
+
 #include "opae_events_api.h"
 
 #ifdef LOG
@@ -46,7 +48,7 @@ int opae_api_register_event(int conn_socket,
 {
 	api_client_event_registry *r =
 		(api_client_event_registry *) malloc(sizeof(*r));
-	errno_t err;
+	int err;
 
 	if (!r)
 		return ENOMEM;
@@ -79,7 +81,7 @@ int opae_api_unregister_event(int conn_socket,
 {
 	api_client_event_registry *trash;
 	api_client_event_registry *save;
-	errno_t err;
+	int err;
 	int res = 0;
 
 	fpgad_mutex_lock(err, &list_lock);
@@ -144,7 +146,7 @@ find_event_for(int conn_socket)
 void opae_api_unregister_all_events_for(int conn_socket)
 {
 	api_client_event_registry *r;
-	errno_t err;
+	int err;
 
 	fpgad_mutex_lock(err, &list_lock);
 
@@ -160,7 +162,7 @@ void opae_api_unregister_all_events_for(int conn_socket)
 void opae_api_unregister_all_events(void)
 {
 	api_client_event_registry *r;
-	errno_t err;
+	int err;
 
 	fpgad_mutex_lock(err, &list_lock);
 
@@ -181,7 +183,7 @@ void opae_api_for_each_registered_event
 void *context)
 {
 	api_client_event_registry *r;
-	errno_t err;
+	int err;
 
 	fpgad_mutex_lock(err, &list_lock);
 

@@ -297,7 +297,7 @@ STATIC fpga_result vc_sensor_get(vc_device *vc, vc_sensor *s)
 	if (res != FPGA_OK)
 		return res;
 
-	strcmp_s(s->type, 11, "Temperature", &indicator);
+	indicator = strcmp(s->type, "Temperature");
 	is_temperature = (indicator == 0);
 
 	res = vc_sensor_get_u64(s, "high_fatal", &s->high_fatal);
@@ -460,7 +460,7 @@ STATIC fpga_result vc_enum_sensors(vc_device *vc)
 		return res;
 
 	for (i = 0 ; i < MAX_VC_SENSORS ; ++i) {
-		snprintf_s_i(name, sizeof(name), "sensor%d", i);
+		snprintf(name, sizeof(name), "sensor%d", i);
 		vc_enum_sensor(vc, name);
 	}
 
@@ -487,7 +487,6 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 	char path[PATH_MAX];
 	char rlpath[PATH_MAX];
 	char *p;
-	errno_t err;
 	char cmd[256];
 	char output[256];
 	FILE *fp;
@@ -517,11 +516,11 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 
 	fpgaDestroyProperties(&prop);
 
-	snprintf_s_iiii(path, PATH_MAX,
+	snprintf(path, sizeof(path),
 			"/sys/bus/pci/devices/%04x:%02x:%02x.%d",
 			(int)seg, (int)bus, (int)dev, (int)fn);
 
-	memset_s(rlpath, sizeof(rlpath), 0);
+	memset(rlpath, 0, sizeof(rlpath));
 
 	if (readlink(path, rlpath, sizeof(rlpath)) < 0) {
 		LOG("readlink \"%s\" failed.\n", path);
@@ -534,19 +533,14 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 	// ../../../devices/pci0000:ae/0000:ae:00.0/0000:af:00.0/
 	// 0000:b0:09.0/0000:b2:00.0
 
-	err = strstr_s(rlpath, sizeof(rlpath),
-		       "devices/pci", 11, &p);
-	if (err != EOK) {
-		LOG("error: no \"devices/pci\" in path \"%s\"\n", rlpath);
-		return FPGA_EXCEPTION;
-	}
+	p = strstr(rlpath, "devices/pci");
 
 	p += 19;
 	*(p + 12) = '\0';
 
 	// Save the current ECAP_AER values.
 
-	snprintf_s_s(cmd, sizeof(cmd),
+	snprintf(cmd, sizeof(cmd),
 		      "setpci -s %s ECAP_AER+0x08.L", p);
 
 	fp = popen(cmd, "r");
@@ -569,7 +563,7 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 	    vc->previous_ecap_aer[0], p);
 
 
-	snprintf_s_s(cmd, sizeof(cmd),
+	snprintf(cmd, sizeof(cmd),
 		      "setpci -s %s ECAP_AER+0x14.L", p);
 
 	fp = popen(cmd, "r");
@@ -594,7 +588,7 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 
 	// Disable AER.
 
-	snprintf_s_s(cmd, sizeof(cmd),
+	snprintf(cmd, sizeof(cmd),
 		      "setpci -s %s ECAP_AER+0x08.L=0xffffffff", p);
 
 	fp = popen(cmd, "r");
@@ -605,7 +599,7 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 
 	pclose(fp);
 
-	snprintf_s_s(cmd, sizeof(cmd),
+	snprintf(cmd, sizeof(cmd),
 		      "setpci -s %s ECAP_AER+0x14.L=0xffffffff", p);
 
 	fp = popen(cmd, "r");
@@ -627,7 +621,6 @@ STATIC fpga_result vc_enable_aer(vc_device *vc)
 	char path[PATH_MAX];
 	char rlpath[PATH_MAX];
 	char *p;
-	errno_t err;
 	char cmd[256];
 	FILE *fp;
 
@@ -655,11 +648,11 @@ STATIC fpga_result vc_enable_aer(vc_device *vc)
 
 	fpgaDestroyProperties(&prop);
 
-	snprintf_s_iiii(path, PATH_MAX,
+	snprintf(path, sizeof(path),
 			"/sys/bus/pci/devices/%04x:%02x:%02x.%d",
 			(int)seg, (int)bus, (int)dev, (int)fn);
 
-	memset_s(rlpath, sizeof(rlpath), 0);
+	memset(rlpath, 0, sizeof(rlpath));
 
 	if (readlink(path, rlpath, sizeof(rlpath)) < 0) {
 		LOG("readlink \"%s\" failed.\n", path);
@@ -672,19 +665,14 @@ STATIC fpga_result vc_enable_aer(vc_device *vc)
 	// ../../../devices/pci0000:ae/0000:ae:00.0/0000:af:00.0/
 	// 0000:b0:09.0/0000:b2:00.0
 
-	err = strstr_s(rlpath, sizeof(rlpath),
-		       "devices/pci", 11, &p);
-	if (err != EOK) {
-		LOG("error: no \"devices/pci\" in path \"%s\"\n", rlpath);
-		return FPGA_EXCEPTION;
-	}
+	p = strstr(rlpath, "devices/pci");
 
 	p += 19;
 	*(p + 12) = '\0';
 
 	// Write the saved ECAP_AER values to enable AER.
 
-	snprintf_s_si(cmd, sizeof(cmd),
+	snprintf(cmd, sizeof(cmd),
 		      "setpci -s %s ECAP_AER+0x08.L=0x%08x",
 		      p, vc->previous_ecap_aer[0]);
 
@@ -700,7 +688,7 @@ STATIC fpga_result vc_enable_aer(vc_device *vc)
 	    vc->previous_ecap_aer[0], p);
 
 
-	snprintf_s_si(cmd, sizeof(cmd),
+	snprintf(cmd, sizeof(cmd),
 		      "setpci -s %s ECAP_AER+0x14.L=0x%08x",
 		      p, vc->previous_ecap_aer[1]);
 
@@ -805,7 +793,7 @@ STATIC bool vc_monitor_sensors(vc_device *vc)
 			BIT_SET_CLR(vc->state_last, s->id);
 	}
 
-	memset_s(vc->state_tripped, (vc->max_sensor_id + 7) / 8, 0);
+	memset(vc->state_tripped, 0, (vc->max_sensor_id + 7) / 8);
 
 	return res;
 }

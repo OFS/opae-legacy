@@ -122,8 +122,8 @@ int readmsr(int split_point, uint64_t msr, uint64_t *value)
 		return -1;
 	}
 
-	snprintf_s_il(msr_cmd, sizeof(msr_cmd),
-			RDMSR_CMD_PATH, split_point, msr);
+	snprintf(msr_cmd, sizeof(msr_cmd),
+		 RDMSR_CMD_PATH, split_point, msr);
 
 	fp = popen(msr_cmd, "r");
 	if (fp == NULL) {
