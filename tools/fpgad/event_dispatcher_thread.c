@@ -1,4 +1,4 @@
-// Copyright(c) 2018-2019, Intel Corporation
+// Copyright(c) 2018-2020, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,7 @@
 
 #include <semaphore.h>
 #include <time.h>
+#include <inttypes.h>
 #include "event_dispatcher_thread.h"
 
 #ifdef LOG
@@ -71,7 +72,7 @@ STATIC evt_dispatch_queue high_priority_queue = {
 
 STATIC void evt_queue_init(evt_dispatch_queue *q)
 {
-	memset_s(q->q, sizeof(q->q), 0);
+	memset(q->q, 0, sizeof(q->q));
 	q->head = q->tail = 0;
 }
 
@@ -111,7 +112,7 @@ STATIC bool _evt_queue_response(evt_dispatch_queue *q,
 				fpgad_monitored_device *device,
 				void *context)
 {
-	errno_t res;
+	int res;
 
 	opae_mutex_lock(res, &q->lock);
 
@@ -136,7 +137,7 @@ STATIC bool _evt_queue_response(evt_dispatch_queue *q,
 STATIC bool _evt_queue_get(evt_dispatch_queue *q,
 			   event_dispatch_queue_item *item)
 {
-	errno_t res;
+	int res;
 
 	opae_mutex_lock(res, &q->lock);
 
@@ -146,9 +147,7 @@ STATIC bool _evt_queue_get(evt_dispatch_queue *q,
 	}
 
 	*item = q->q[q->head];
-	memset_s(&q->q[q->head],
-		 sizeof(q->q[0]),
-		 0);
+	memset(&q->q[q->head], 0, sizeof(q->q[0]));
 	q->head = (q->head + 1) % EVENT_DISPATCH_QUEUE_DEPTH;
 
 	opae_mutex_unlock(res, &q->lock);

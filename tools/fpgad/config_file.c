@@ -1,4 +1,4 @@
-// Copyright(c) 2018-2019, Intel Corporation
+// Copyright(c) 2018-2020, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -49,16 +49,11 @@ do { \
  \
 		if (!cmd_path_is_symlink(__f)) { \
  \
-			err = strncpy_s(c->cfgfile, \
-					sizeof(c->cfgfile), \
+			strncpy(c->cfgfile, \
 					canon, \
-					strnlen_s(canon, PATH_MAX)); \
-			if (err) \
-				LOG("strncpy_s failed.\n"); \
-			else { \
-				free(canon); \
-				return 0; \
-			} \
+					sizeof(c->cfgfile) - 1); \
+			free(canon); \
+			return 0; \
 		} \
  \
 		free(canon); \
@@ -70,7 +65,6 @@ int cfg_find_config_file(struct fpgad_config *c)
 	char path[PATH_MAX];
 	char *e;
 	char *canon = NULL;
-	errno_t err;
 	uid_t uid;
 
 	uid = geteuid();
@@ -78,8 +72,7 @@ int cfg_find_config_file(struct fpgad_config *c)
 	e = getenv("FPGAD_CONFIG_FILE");
 	if (e) {
 		// try $FPGAD_CONFIG_FILE
-		strncpy_s(path, sizeof(path),
-			  e, strnlen_s(e, PATH_MAX));
+		strncpy(path, e, sizeof(path) - 1);
 
 		CFG_TRY_FILE(path);
 	}
@@ -92,7 +85,7 @@ int cfg_find_config_file(struct fpgad_config *c)
 		passwd = getpwuid(uid);
 
 		// try $HOME/.opae/fpgad.cfg
-		snprintf_s_s(path, sizeof(path),
+		snprintf(path, sizeof(path),
 			     "%s/.opae/fpgad.cfg", passwd->pw_dir);
 
 		CFG_TRY_FILE(path);
@@ -503,7 +496,6 @@ STATIC bool cfg_verify_supported_devices(fpgad_supported_device *d)
 {
 	while (d->library_path) {
 		char *sub = NULL;
-		errno_t err;
 
 		if (d->library_path[0] == '/') {
 			LOG("plugin library paths may not "
@@ -517,9 +509,8 @@ STATIC bool cfg_verify_supported_devices(fpgad_supported_device *d)
 			return false;
 		}
 
-		err = strstr_s((char *)d->library_path, PATH_MAX,
-			       "..", 2, &sub);
-		if (EOK == err) {
+		sub = strstr((char *)d->library_path, "..");
+		if (sub) {
 			LOG("plugin library paths may not "
 			    "contain .. : %s\n", d->library_path);
 			return false;

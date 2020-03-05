@@ -1,4 +1,4 @@
-// Copyright(c) 2018-2019, Intel Corporation
+// Copyright(c) 2018-2020, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 	int res;
 	FILE *fp;
 
-	memset_s(&global_config, sizeof(global_config), 0);
+	memset(&global_config, 0, sizeof(global_config));
 
 	global_config.poll_interval_usec = 100 * 1000;
 	global_config.running = true;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 	} else {
 		struct sigaction sa;
 
-		memset_s(&sa, sizeof(sa), 0);
+		memset(&sa, 0, sizeof(sa));
 		sa.sa_flags = SA_SIGINFO | SA_RESETHAND;
 		sa.sa_sigaction = sig_handler;
 

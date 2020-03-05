@@ -1,4 +1,4 @@
-// Copyright(c) 2018-2019, Intel Corporation
+// Copyright(c) 2018-2020, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -60,7 +60,7 @@ int log_open(const char *filename)
 		localtime_r(&raw, &tm);
 		asctime_r(&tm, timebuf);
 
-		len = strnlen_s(timebuf, sizeof(timebuf));
+		len = strnlen(timebuf, sizeof(timebuf));
 		if (len < BUF_TIME_LEN) {
 			timebuf[len - 1] = '\0'; /* erase \n */
 		} else {

@@ -90,8 +90,8 @@ STATIC bool cmd_register_null_gbs(struct fpgad_config *c, char *null_gbs_path)
 
 		if (canon_path) {
 
-			memset_s(&c->null_gbs[c->num_null_gbs],
-				 sizeof(opae_bitstream_info), 0);
+			memset(&c->null_gbs[c->num_null_gbs], 0,
+				 sizeof(opae_bitstream_info));
 
 			if (opae_load_bitstream(canon_path,
 						&c->null_gbs[c->num_null_gbs])) {
@@ -145,8 +145,7 @@ int cmd_parse_args(struct fpgad_config *c, int argc, char *argv[])
 
 		case 'l':
 			if (tmp_optarg) {
-				strncpy_s(c->logfile, sizeof(c->logfile),
-						tmp_optarg, PATH_MAX);
+				strncpy(c->logfile, tmp_optarg, PATH_MAX - 1);
 			} else {
 				LOG("missing logfile parameter.\n");
 				return 1;
@@ -155,8 +154,7 @@ int cmd_parse_args(struct fpgad_config *c, int argc, char *argv[])
 
 		case 'p':
 			if (tmp_optarg) {
-				strncpy_s(c->pidfile, sizeof(c->pidfile),
-						tmp_optarg, PATH_MAX);
+				strncpy(c->pidfile, tmp_optarg, PATH_MAX - 1);
 			} else {
 				LOG("missing pidfile parameter.\n");
 				return 1;
@@ -187,8 +185,7 @@ int cmd_parse_args(struct fpgad_config *c, int argc, char *argv[])
 
 		case 'c':
 			if (tmp_optarg) {
-				strncpy_s(c->cfgfile, sizeof(c->cfgfile),
-						tmp_optarg, PATH_MAX);
+				strncpy(c->cfgfile, tmp_optarg, PATH_MAX - 1);
 			} else {
 				LOG("missing cfgfile parameter.\n");
 				return 1;
@@ -231,14 +228,14 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 	char buf[PATH_MAX];
 	char *canon_path;
 	uid_t uid;
+	size_t len;
 
 	uid = geteuid();
 
 	if (!uid) {
 		// If we're being run as root, then use DEFAULT_DIR_ROOT
 		// as the working directory.
-		strncpy_s(c->directory, sizeof(c->directory),
-				DEFAULT_DIR_ROOT, DEFAULT_DIR_ROOT_SIZE);
+		strncpy(c->directory, DEFAULT_DIR_ROOT, DEFAULT_DIR_ROOT_SIZE + 1);
 		mode = 0755;
 		c->filemode = 0026;
 	} else {
@@ -250,18 +247,17 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 		canon_path = canonicalize_file_name(passwd->pw_dir);
 
 		if (canon_path) {
-			snprintf_s_s(c->directory, sizeof(c->directory),
+			snprintf(c->directory, sizeof(c->directory),
 					"%s/.opae", canon_path);
 			free(canon_path);
 		} else {
 			// ${HOME} not found or invalid - use current dir.
 			if (getcwd(buf, sizeof(buf))) {
-				snprintf_s_s(c->directory, sizeof(c->directory),
+				snprintf(c->directory, sizeof(c->directory),
 						"%s/.opae", buf);
 			} else {
 				// Current directory not found - use /
-				strncpy_s(c->directory, sizeof(c->directory),
-						"/.opae", 6);
+				strncpy(c->directory, "/.opae", 7);
 			}
 		}
 
@@ -287,26 +283,26 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 	// Verify logfile and pidfile do not contain ".."
 	// nor "/".
 	def = false;
-	sub = NULL;
-	strstr_s(c->logfile, sizeof(c->logfile),
-			"..", 2, &sub);
+	sub = strstr(c->logfile, "..");
 	if (sub)
 		def = true;
 
-	sub = NULL;
-	strstr_s(c->logfile, sizeof(c->logfile),
-			"/", 1, &sub);
+	sub = strstr(c->logfile, "/");
 	if (sub)
 		def = true;
 
 	if (def || (c->logfile[0] == '\0')) {
-		snprintf_s_ss(c->logfile, sizeof(c->logfile),
-				"%s/%s", c->directory, DEFAULT_LOG);
+		strncpy(c->logfile, c->directory, sizeof(c->logfile) - 1);
+		strncat(c->logfile, "/", 2);
+		len = strnlen(c->logfile, sizeof(c->logfile));
+		strncat(c->logfile, DEFAULT_LOG, sizeof(c->logfile) - len - 1);
 	} else {
-		strncpy_s(buf, sizeof(buf),
-				c->logfile, sizeof(c->logfile));
-		snprintf_s_ss(c->logfile, sizeof(c->logfile),
-				"%s/%s", c->directory, buf);
+		strncpy(buf, c->logfile, sizeof(buf) - 1);
+
+		strncpy(c->logfile, c->directory, sizeof(c->logfile));
+		strncat(c->logfile, "/", 2);
+		len = strnlen(c->logfile, sizeof(c->logfile));
+		strncat(c->logfile, buf, sizeof(c->logfile) - len - 1);
 	}
 
 	if (cmd_path_is_symlink(c->logfile)) {
@@ -317,26 +313,26 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 	LOG("daemon log file is %s\n", c->logfile);
 
 	def = false;
-	sub = NULL;
-	strstr_s(c->pidfile, sizeof(c->pidfile),
-			"..", 2, &sub);
+	sub = strstr(c->pidfile, "..");
 	if (sub)
 		def = true;
 
-	sub = NULL;
-	strstr_s(c->pidfile, sizeof(c->pidfile),
-			"/", 1, &sub);
+	sub = strstr(c->pidfile, "/");
 	if (sub)
 		def = true;
 
 	if (def || (c->pidfile[0] == '\0')) {
-		snprintf_s_ss(c->pidfile, sizeof(c->pidfile),
-				"%s/%s", c->directory, DEFAULT_PID);
+		strncpy(c->pidfile, c->directory, sizeof(c->pidfile) - 1);
+		strncat(c->pidfile, "/", 2);
+		len = strnlen(c->pidfile, sizeof(c->pidfile));
+		strncat(c->pidfile, DEFAULT_PID, sizeof(c->pidfile) - len - 1);
 	} else {
-		strncpy_s(buf, sizeof(buf),
-				c->pidfile, sizeof(c->pidfile));
-		snprintf_s_ss(c->pidfile, sizeof(c->pidfile),
-				"%s/%s", c->directory, buf);
+		strncpy(buf, c->pidfile, sizeof(buf) - 1);
+
+		strncpy(c->pidfile, c->directory, sizeof(c->pidfile) - 1);
+		strncat(c->pidfile, "/", 2);
+		len = strnlen(c->pidfile, sizeof(c->pidfile));
+		strncat(c->pidfile, buf, sizeof(c->pidfile) - len - 1);
 	}
 
 	if (cmd_path_is_symlink(c->pidfile)) {
@@ -348,9 +344,7 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 
 	// Verify cfgfile doesn't contain ".."
 	def = false;
-	sub = NULL;
-	strstr_s(c->cfgfile, sizeof(c->cfgfile),
-			"..", 2, &sub);
+	sub = strstr(c->cfgfile, "..");
 	if (sub)
 		def = true;
 
@@ -362,10 +356,9 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 
 			if (!cmd_path_is_symlink(c->cfgfile)) {
 
-				strncpy_s(c->cfgfile,
-					  sizeof(c->cfgfile),
+				strncpy(c->cfgfile,
 					  canon_path,
-					  strnlen_s(canon_path, PATH_MAX));
+					  sizeof(c->cfgfile) - 1);
 
 				if (!cfg_load_config(c)) {
 					LOG("daemon cfg file is %s\n",
@@ -434,36 +427,24 @@ void cmd_destroy(struct fpgad_config *c)
 bool cmd_path_is_symlink(const char *path)
 {
 	char component[PATH_MAX];
-	errno_t res;
 	struct stat stat_buf;
 	size_t len;
 	char *pslash;
 
-	len = strnlen_s(path, PATH_MAX);
+	len = strnlen(path, PATH_MAX);
 	if (!len) // empty path
 		return false;
 
-	res = strncpy_s(component, sizeof(component),
-			path, len);
-	if (res) {
-		LOG("strncpy_s failed.\n");
-		return false;
-	}
+	strncpy(component, path, sizeof(component) - 1);
 
 	if (component[0] == '/') {
 		// absolute path
-		int indicator = -1;
 
 		pslash = realpath(path, component);
 
-		if (strcmp_s(component, sizeof(component),
-			     path, &indicator)) {
-			LOG("strcmp_s failed.\n");
-			return false;
-		}
-
-		if (indicator)
+		if (strcmp(component, path))
 			return true;
+
 
 	} else {
 		// relative path
