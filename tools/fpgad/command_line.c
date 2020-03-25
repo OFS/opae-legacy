@@ -253,8 +253,8 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 		} else {
 			// ${HOME} not found or invalid - use current dir.
 			if (getcwd(buf, sizeof(buf))) {
-				snprintf(c->directory, sizeof(c->directory),
-						"%s/.opae", buf);
+				strncpy(c->directory, buf, sizeof(c->directory) - 1);
+				strncat(c->directory, "/.opae", 7);
 			} else {
 				// Current directory not found - use /
 				strncpy(c->directory, "/.opae", 7);
