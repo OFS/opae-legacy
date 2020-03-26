@@ -1,4 +1,4 @@
-// Copyright(c) 2017-2018, Intel Corporation
+// Copyright(c) 2017-2020, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -52,7 +52,8 @@ eth_ctrl::eth_ctrl(przone_interface::ptr_t przone, gbs_version version)
 , eth_wr_data_  (prtable[static_cast<uint8_t>(version)][3])
 , eth_rd_data_  (prtable[static_cast<uint8_t>(version)][4])
 {
-
+    (void) scratch_;
+    (void) eth_arst_;
 }
 
 
