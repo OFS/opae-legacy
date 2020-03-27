@@ -48,10 +48,11 @@ do { \
 	if (canon) { \
  \
 		if (!cmd_path_is_symlink(__f)) { \
- \
+                        size_t len = strnlen(canon, \
+					sizeof(c->cfgfile) - 1); \
 			strncpy(c->cfgfile, \
 					canon, \
-					sizeof(c->cfgfile) - 1); \
+					len + 1); \
 			free(canon); \
 			return 0; \
 		} \
@@ -66,13 +67,15 @@ int cfg_find_config_file(struct fpgad_config *c)
 	char *e;
 	char *canon = NULL;
 	uid_t uid;
+	size_t len;
 
 	uid = geteuid();
 
 	e = getenv("FPGAD_CONFIG_FILE");
 	if (e) {
 		// try $FPGAD_CONFIG_FILE
-		strncpy(path, e, sizeof(path) - 1);
+		len = strnlen(e, sizeof(path) - 1);
+		strncpy(path, e, len + 1);
 
 		CFG_TRY_FILE(path);
 	}

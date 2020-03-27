@@ -62,14 +62,14 @@ int file_write_string(const char *path, const char *str, size_t len)
 
 char *cstr_dup(const char *s)
 {
-	size_t len = strlen(s);
 	char *p;
+	size_t len = strnlen(s, 8192);
 
 	p = malloc(len+1);
 	if (!p)
 		return NULL;
 
-	strncpy(p, s, len);
+	strncpy(p, s, len + 1);
 
 	p[len] = '\0';
 	return p;

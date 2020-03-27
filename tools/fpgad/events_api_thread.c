@@ -180,6 +180,7 @@ void *events_api_thread(void *thread_context)
 	struct sockaddr_un addr;
 	int server_socket;
 	int conn_socket;
+	size_t len;
 
 	LOG("starting\n");
 
@@ -209,8 +210,8 @@ void *events_api_thread(void *thread_context)
 	LOG("created server socket.\n");
 
 	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, c->global->api_socket,
-		sizeof(addr.sun_path) - 1);
+	len = strnlen(c->global->api_socket, sizeof(addr.sun_path) - 1);
+	strncpy(addr.sun_path, c->global->api_socket, len + 1);
 
 	if (bind(server_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		LOG("failed to bind server socket.\n");
