@@ -251,6 +251,7 @@ int ParseCmds(struct CoreIdleCommandLine *coreidleCmdLine,
 	int getopt_ret     = 0 ;
 	int option_index   = 0;
 	char *endptr       = NULL;
+	size_t len;
 
 	while (-1 != (getopt_ret = getopt_long(argc, argv,
 			GETOPT_STRING, longopts, &option_index))) {
@@ -314,13 +315,13 @@ int ParseCmds(struct CoreIdleCommandLine *coreidleCmdLine,
 			coreidleCmdLine->socket = strtol(tmp_optarg, &endptr, 0);
 			break;
 
-		case 'G': {
+		case 'G':
 			// Bitstream GBS
 			if (!tmp_optarg)
 				return -1;
-			strncpy(coreidleCmdLine->filename, tmp_optarg, MAX_CMD_OPT);
-			coreidleCmdLine->filename[sizeof(coreidleCmdLine->filename)-1] = 0;
-			} break;
+			len = strnlen(tmp_optarg, MAX_CMD_OPT - 1);
+			strncpy(coreidleCmdLine->filename, tmp_optarg, len + 1);
+			break;
 
 		case 'v':
 			printf("coreidle %s %s%s\n",

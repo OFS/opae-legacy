@@ -120,6 +120,7 @@ int cmd_parse_args(struct fpgad_config *c, int argc, char *argv[])
 {
 	int getopt_ret;
 	int option_index;
+	size_t len;
 
 	while (-1 != (getopt_ret = getopt_long(argc, argv, OPT_STR, longopts, &option_index))) {
 		const char *tmp_optarg = optarg;
@@ -145,7 +146,8 @@ int cmd_parse_args(struct fpgad_config *c, int argc, char *argv[])
 
 		case 'l':
 			if (tmp_optarg) {
-				strncpy(c->logfile, tmp_optarg, PATH_MAX - 1);
+				len = strnlen(tmp_optarg, PATH_MAX - 1);
+				strncpy(c->logfile, tmp_optarg, len + 1);
 			} else {
 				LOG("missing logfile parameter.\n");
 				return 1;
@@ -154,7 +156,8 @@ int cmd_parse_args(struct fpgad_config *c, int argc, char *argv[])
 
 		case 'p':
 			if (tmp_optarg) {
-				strncpy(c->pidfile, tmp_optarg, PATH_MAX - 1);
+				len = strnlen(tmp_optarg, PATH_MAX - 1);
+				strncpy(c->pidfile, tmp_optarg, len + 1);
 			} else {
 				LOG("missing pidfile parameter.\n");
 				return 1;
@@ -185,7 +188,8 @@ int cmd_parse_args(struct fpgad_config *c, int argc, char *argv[])
 
 		case 'c':
 			if (tmp_optarg) {
-				strncpy(c->cfgfile, tmp_optarg, PATH_MAX - 1);
+				len = strnlen(tmp_optarg, PATH_MAX - 1);
+				strncpy(c->cfgfile, tmp_optarg, len + 1);
 			} else {
 				LOG("missing cfgfile parameter.\n");
 				return 1;
@@ -253,8 +257,11 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 		} else {
 			// ${HOME} not found or invalid - use current dir.
 			if (getcwd(buf, sizeof(buf))) {
-				strncpy(c->directory, buf, sizeof(c->directory) - 1);
-				strncat(c->directory, "/.opae", 7);
+				len = strnlen(buf, sizeof(c->directory) - 1);
+				strncpy(c->directory, buf, len + 1);
+				len = strnlen("/.opae",
+					      sizeof(c->directory) - (len + 1));
+				strncat(c->directory, "/.opae", len + 1);
 			} else {
 				// Current directory not found - use /
 				strncpy(c->directory, "/.opae", 7);
@@ -292,17 +299,20 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 		def = true;
 
 	if (def || (c->logfile[0] == '\0')) {
-		strncpy(c->logfile, c->directory, sizeof(c->logfile) - 1);
+		len = strnlen(c->directory, sizeof(c->logfile) - 1);
+		strncpy(c->logfile, c->directory, len + 1);
 		strncat(c->logfile, "/", 2);
-		len = strnlen(c->logfile, sizeof(c->logfile));
-		strncat(c->logfile, DEFAULT_LOG, sizeof(c->logfile) - len - 1);
+		len = strnlen(DEFAULT_LOG, sizeof(c->logfile) - (len + 1));
+		strncat(c->logfile, DEFAULT_LOG, len + 1);
 	} else {
-		strncpy(buf, c->logfile, sizeof(buf) - 1);
+		len = strnlen(c->logfile, sizeof(buf) - 1);
+		strncpy(buf, c->logfile, len + 1);
 
-		strncpy(c->logfile, c->directory, sizeof(c->logfile));
+		len = strnlen(c->directory, sizeof(c->logfile) - 1);
+		strncpy(c->logfile, c->directory, len + 1);
 		strncat(c->logfile, "/", 2);
-		len = strnlen(c->logfile, sizeof(c->logfile));
-		strncat(c->logfile, buf, sizeof(c->logfile) - len - 1);
+		len = strnlen(buf, sizeof(c->logfile) - (len + 1));
+		strncat(c->logfile, buf, len + 1);
 	}
 
 	if (cmd_path_is_symlink(c->logfile)) {
@@ -322,17 +332,20 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 		def = true;
 
 	if (def || (c->pidfile[0] == '\0')) {
-		strncpy(c->pidfile, c->directory, sizeof(c->pidfile) - 1);
+		len = strnlen(c->directory, sizeof(c->pidfile) - 1);
+		strncpy(c->pidfile, c->directory, len + 1);
 		strncat(c->pidfile, "/", 2);
-		len = strnlen(c->pidfile, sizeof(c->pidfile));
-		strncat(c->pidfile, DEFAULT_PID, sizeof(c->pidfile) - len - 1);
+		len = strnlen(DEFAULT_PID, sizeof(c->pidfile) - (len + 1));
+		strncat(c->pidfile, DEFAULT_PID, len + 1);
 	} else {
-		strncpy(buf, c->pidfile, sizeof(buf) - 1);
+		len = strnlen(c->pidfile, sizeof(buf) - 1);
+		strncpy(buf, c->pidfile, len + 1);
 
-		strncpy(c->pidfile, c->directory, sizeof(c->pidfile) - 1);
+		len = strnlen(c->directory, sizeof(c->pidfile) - 1);
+		strncpy(c->pidfile, c->directory, len + 1);
 		strncat(c->pidfile, "/", 2);
-		len = strnlen(c->pidfile, sizeof(c->pidfile));
-		strncat(c->pidfile, buf, sizeof(c->pidfile) - len - 1);
+		len = strnlen(buf, sizeof(c->pidfile) - (len + 1));
+		strncat(c->pidfile, buf, len + 1);
 	}
 
 	if (cmd_path_is_symlink(c->pidfile)) {
@@ -356,9 +369,11 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 
 			if (!cmd_path_is_symlink(c->cfgfile)) {
 
+				len = strnlen(canon_path,
+					      sizeof(c->cfgfile) - 1);
 				strncpy(c->cfgfile,
 					  canon_path,
-					  sizeof(c->cfgfile) - 1);
+					  len + 1);
 
 				if (!cfg_load_config(c)) {
 					LOG("daemon cfg file is %s\n",
@@ -431,11 +446,11 @@ bool cmd_path_is_symlink(const char *path)
 	size_t len;
 	char *pslash;
 
-	len = strnlen(path, PATH_MAX);
+	len = strnlen(path, PATH_MAX - 1);
 	if (!len) // empty path
 		return false;
 
-	strncpy(component, path, sizeof(component) - 1);
+	strncpy(component, path, len + 1);
 
 	if (component[0] == '/') {
 		// absolute path
