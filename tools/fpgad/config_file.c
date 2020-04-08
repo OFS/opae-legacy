@@ -48,7 +48,7 @@ do { \
 	if (canon) { \
  \
 		if (!cmd_path_is_symlink(__f)) { \
-                        size_t len = strnlen(canon, \
+			size_t len = strnlen(canon, \
 					sizeof(c->cfgfile) - 1); \
 			strncpy(c->cfgfile, \
 					canon, \
