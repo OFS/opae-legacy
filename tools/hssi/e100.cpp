@@ -1,4 +1,4 @@
-// Copyright(c) 2017-2018, Intel Corporation
+// Copyright(c) 2017-2020, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -46,6 +46,7 @@ e100::e100()
 , gen_ctrl_(0)
 , mon_ctrl_(0)
 {
+    (void) interactive_;
 }
 
 e100::e100(const std::string & name)

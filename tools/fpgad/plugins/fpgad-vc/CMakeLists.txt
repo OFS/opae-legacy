@@ -27,7 +27,6 @@
 opae_add_module_library(TARGET fpgad-vc
     SOURCE fpgad-vc.c
     LIBS
-        safestr
         opae-c
         fpgad-api
         ${libjson-c_LIBRARIES}

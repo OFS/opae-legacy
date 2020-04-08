@@ -1,4 +1,4 @@
-// Copyright(c) 2019, Intel Corporation
+// Copyright(c) 2019-2020, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,6 @@
 
 #include <stdio.h>
 
-#include "safe_string/safe_string.h"
 #include "logging.h"
 #include "sysfs.h"
 
@@ -63,18 +62,14 @@ int file_write_string(const char *path, const char *str, size_t len)
 
 char *cstr_dup(const char *s)
 {
-	size_t len = strlen(s);
 	char *p;
+	size_t len = strnlen(s, 8192);
 
 	p = malloc(len+1);
 	if (!p)
 		return NULL;
 
-	if (strncpy_s(p, len+1, s, len)) {
-		LOG("strncpy_s failed.\n");
-		free(p);
-		return NULL;
-	}
+	strncpy(p, s, len + 1);
 
 	p[len] = '\0';
 	return p;
