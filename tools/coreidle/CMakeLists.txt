@@ -30,7 +30,6 @@ opae_add_executable(TARGET coreidle
         coreidle.c
     LIBS
         m
-        safestr
         bitstream
         opae-c
         ${libjson-c_LIBRARIES}

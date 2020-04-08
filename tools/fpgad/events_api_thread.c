@@ -1,4 +1,4 @@
-// Copyright(c) 2018-2019, Intel Corporation
+// Copyright(c) 2018-2020, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -38,6 +38,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <poll.h>
+#include <inttypes.h>
 #include "events_api_thread.h"
 #include "api/opae_events_api.h"
 
@@ -96,7 +97,7 @@ STATIC int handle_message(int conn_socket)
 	/* set up ancillary data message header */
 	iov[0].iov_base = &req;
 	iov[0].iov_len = sizeof(req);
-	memset_s(buf, sizeof(buf), 0);
+	memset(buf, 0, sizeof(buf));
 	mh.msg_name = NULL;
 	mh.msg_namelen = 0;
 	mh.msg_iov = iov;
@@ -179,7 +180,7 @@ void *events_api_thread(void *thread_context)
 	struct sockaddr_un addr;
 	int server_socket;
 	int conn_socket;
-	errno_t e;
+	size_t len;
 
 	LOG("starting\n");
 
@@ -209,13 +210,8 @@ void *events_api_thread(void *thread_context)
 	LOG("created server socket.\n");
 
 	addr.sun_family = AF_UNIX;
-
-	e = strncpy_s(addr.sun_path, sizeof(addr.sun_path),
-			c->global->api_socket, PATH_MAX);
-	if (EOK != e) {
-		LOG("strncpy_s failed\n");
-		goto out_close_server;
-	}
+	len = strnlen(c->global->api_socket, sizeof(addr.sun_path) - 1);
+	strncpy(addr.sun_path, c->global->api_socket, len + 1);
 
 	if (bind(server_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		LOG("failed to bind server socket.\n");

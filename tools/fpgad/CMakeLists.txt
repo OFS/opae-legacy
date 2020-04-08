@@ -39,7 +39,6 @@ opae_add_executable(TARGET fpgad
         daemonize.c
         monitored_device.c
     LIBS
-        safestr
         opae-c
         bitstream
         fpgad-api

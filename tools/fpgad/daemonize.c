@@ -1,4 +1,4 @@
-// Copyright(c) 2017-2019, Intel Corporation
+// Copyright(c) 2017-2020, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -37,8 +37,6 @@
 #include <fcntl.h>
 #include <signal.h>
 
-#include "safe_string/safe_string.h"
-
 int daemonize(void (*hndlr)(int, siginfo_t *, void *), mode_t mask, const char *dir)
 {
 	pid_t pid;
@@ -62,7 +60,7 @@ int daemonize(void (*hndlr)(int, siginfo_t *, void *), mode_t mask, const char *
 		return errno;
 
 	// 3) Establish signal handler.
-	memset_s(&sa, sizeof(sa), 0);
+	memset(&sa, 0, sizeof(sa));
 	sa.sa_flags     = SA_SIGINFO | SA_RESETHAND;
 	sa.sa_sigaction = hndlr;
 
@@ -98,4 +96,3 @@ int daemonize(void (*hndlr)(int, siginfo_t *, void *), mode_t mask, const char *
 
 	return 0;
 }
-

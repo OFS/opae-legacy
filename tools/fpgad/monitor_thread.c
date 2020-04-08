@@ -123,7 +123,7 @@ void *monitor_thread(void *thread_context)
 	struct sched_param sched_param;
 	int policy = 0;
 	int res;
-	errno_t err;
+	int err;
 	fpgad_monitored_device *d;
 
 	LOG("starting\n");
@@ -173,7 +173,7 @@ void *monitor_thread(void *thread_context)
 
 void mon_monitor_device(fpgad_monitored_device *d)
 {
-	errno_t err;
+	int err;
 	fpgad_monitored_device *trav;
 
 	fpgad_mutex_lock(err, &mon_list_lock);
@@ -199,7 +199,7 @@ out_unlock:
 void mon_destroy(struct fpgad_config *c)
 {
 	unsigned i;
-	errno_t err;
+	int err;
 	fpgad_monitored_device *d;
 
 	fpgad_mutex_lock(err, &mon_list_lock);

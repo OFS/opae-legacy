@@ -1,4 +1,4 @@
-// Copyright(c) 2017-2019, Intel Corporation
+// Copyright(c) 2017-2020, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -38,7 +38,6 @@
 #include <sched.h>
 #include <fcntl.h>
 
-#include "safe_string/safe_string.h"
 #include <opae/fpga.h>
 
 // FIXME
@@ -123,8 +122,8 @@ int readmsr(int split_point, uint64_t msr, uint64_t *value)
 		return -1;
 	}
 
-	snprintf_s_il(msr_cmd, sizeof(msr_cmd),
-			RDMSR_CMD_PATH, split_point, msr);
+	snprintf(msr_cmd, sizeof(msr_cmd),
+		 RDMSR_CMD_PATH, split_point, msr);
 
 	fp = popen(msr_cmd, "r");
 	if (fp == NULL) {
