@@ -53,6 +53,7 @@ do { \
 			strncpy(c->cfgfile, \
 					canon, \
 					len + 1); \
+			c->cfgfile[len] = '\0'; \
 			free(canon); \
 			return 0; \
 		} \
@@ -76,6 +77,7 @@ int cfg_find_config_file(struct fpgad_config *c)
 		// try $FPGAD_CONFIG_FILE
 		len = strnlen(e, sizeof(path) - 1);
 		strncpy(path, e, len + 1);
+		path[len] = '\0';
 
 		CFG_TRY_FILE(path);
 	}

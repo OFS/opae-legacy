@@ -206,6 +206,11 @@ config_app::~config_app()
 
 bool config_app::setup()
 {
+    if (options_.empty()) {
+        std::cerr << "No options exist." << std::endl;
+        return false;
+    }
+
     options_.get_value<bool>("c-header", c_header_);
     std::string sysfs_path = "";
     int8_t socket_id = -1;
