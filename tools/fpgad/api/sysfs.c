@@ -69,8 +69,8 @@ char *cstr_dup(const char *s)
 	if (!p)
 		return NULL;
 
-	strncpy(p, s, len + 1);
-
+	memcpy(p, s, len);
 	p[len] = '\0';
+
 	return p;
 }

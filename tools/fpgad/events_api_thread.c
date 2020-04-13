@@ -210,8 +210,10 @@ void *events_api_thread(void *thread_context)
 	LOG("created server socket.\n");
 
 	addr.sun_family = AF_UNIX;
+
 	len = strnlen(c->global->api_socket, sizeof(addr.sun_path) - 1);
-	strncpy(addr.sun_path, c->global->api_socket, len + 1);
+	memcpy(addr.sun_path, c->global->api_socket, len);
+	addr.sun_path[len] = '\0';
 
 	if (bind(server_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		LOG("failed to bind server socket.\n");
