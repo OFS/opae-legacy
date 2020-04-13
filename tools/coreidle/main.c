@@ -320,7 +320,8 @@ int ParseCmds(struct CoreIdleCommandLine *coreidleCmdLine,
 			if (!tmp_optarg)
 				return -1;
 			len = strnlen(tmp_optarg, MAX_CMD_OPT - 1);
-			strncpy(coreidleCmdLine->filename, tmp_optarg, len + 1);
+			memcpy(coreidleCmdLine->filename, tmp_optarg, len);
+			coreidleCmdLine->filename[len] = '\0';
 			break;
 
 		case 'v':

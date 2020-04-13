@@ -50,9 +50,9 @@ do { \
 		if (!cmd_path_is_symlink(__f)) { \
 			size_t len = strnlen(canon, \
 					sizeof(c->cfgfile) - 1); \
-			strncpy(c->cfgfile, \
-					canon, \
-					len + 1); \
+			memcpy(c->cfgfile, \
+				canon, \
+				len); \
 			c->cfgfile[len] = '\0'; \
 			free(canon); \
 			return 0; \
@@ -76,7 +76,7 @@ int cfg_find_config_file(struct fpgad_config *c)
 	if (e) {
 		// try $FPGAD_CONFIG_FILE
 		len = strnlen(e, sizeof(path) - 1);
-		strncpy(path, e, len + 1);
+		memcpy(path, e, len);
 		path[len] = '\0';
 
 		CFG_TRY_FILE(path);
