@@ -257,11 +257,10 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 		} else {
 			// ${HOME} not found or invalid - use current dir.
 			if (getcwd(buf, sizeof(buf))) {
-				len = strnlen(buf, sizeof(c->directory) - 1);
-				strncpy(c->directory, buf, len + 1);
-				len = strnlen("/.opae",
-					      sizeof(c->directory) - (len + 1));
-				strncat(c->directory, "/.opae", len + 1);
+				if (snprintf(c->directory, sizeof(c->directory),
+					     "%s/.opae", buf) < 0) {
+					strncpy(c->directory, "/.opae", 7);
+				}
 			} else {
 				// Current directory not found - use /
 				strncpy(c->directory, "/.opae", 7);
@@ -299,20 +298,20 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 		def = true;
 
 	if (def || (c->logfile[0] == '\0')) {
-		len = strnlen(c->directory, sizeof(c->logfile) - 1);
-		strncpy(c->logfile, c->directory, len + 1);
-		strncat(c->logfile, "/", 2);
-		len = strnlen(DEFAULT_LOG, sizeof(c->logfile) - (len + 1));
-		strncat(c->logfile, DEFAULT_LOG, len + 1);
+		if (snprintf(c->logfile, sizeof(c->logfile),
+			     "%s/%s", c->directory, DEFAULT_LOG) < 0) {
+			strncpy(c->logfile, "./" DEFAULT_LOG,
+				sizeof(DEFAULT_LOG) + 3);
+		}
 	} else {
 		len = strnlen(c->logfile, sizeof(buf) - 1);
 		strncpy(buf, c->logfile, len + 1);
 
-		len = strnlen(c->directory, sizeof(c->logfile) - 1);
-		strncpy(c->logfile, c->directory, len + 1);
-		strncat(c->logfile, "/", 2);
-		len = strnlen(buf, sizeof(c->logfile) - (len + 1));
-		strncat(c->logfile, buf, len + 1);
+		if (snprintf(c->logfile, sizeof(c->logfile),
+			     "%s/%s", c->directory, buf) < 0) {
+			strncpy(c->logfile, "./" DEFAULT_LOG,
+				sizeof(DEFAULT_LOG) + 3);
+		}
 	}
 
 	if (cmd_path_is_symlink(c->logfile)) {
@@ -332,20 +331,22 @@ int cmd_canonicalize_paths(struct fpgad_config *c)
 		def = true;
 
 	if (def || (c->pidfile[0] == '\0')) {
-		len = strnlen(c->directory, sizeof(c->pidfile) - 1);
-		strncpy(c->pidfile, c->directory, len + 1);
-		strncat(c->pidfile, "/", 2);
-		len = strnlen(DEFAULT_PID, sizeof(c->pidfile) - (len + 1));
-		strncat(c->pidfile, DEFAULT_PID, len + 1);
+
+		if (snprintf(c->pidfile, sizeof(c->pidfile),
+			     "%s/%s", c->directory, DEFAULT_PID) < 0) {
+			strncpy(c->pidfile, "./" DEFAULT_PID,
+				sizeof(DEFAULT_PID) + 3);
+		}
+
 	} else {
 		len = strnlen(c->pidfile, sizeof(buf) - 1);
 		strncpy(buf, c->pidfile, len + 1);
 
-		len = strnlen(c->directory, sizeof(c->pidfile) - 1);
-		strncpy(c->pidfile, c->directory, len + 1);
-		strncat(c->pidfile, "/", 2);
-		len = strnlen(buf, sizeof(c->pidfile) - (len + 1));
-		strncat(c->pidfile, buf, len + 1);
+		if (snprintf(c->pidfile, sizeof(c->pidfile),
+			     "%s/%s", c->directory, buf) < 0) {
+			strncpy(c->pidfile, "./" DEFAULT_PID,
+				sizeof(DEFAULT_PID) + 3);
+		}
 	}
 
 	if (cmd_path_is_symlink(c->pidfile)) {
@@ -451,6 +452,7 @@ bool cmd_path_is_symlink(const char *path)
 		return false;
 
 	strncpy(component, path, len + 1);
+	component[len] = '\0';
 
 	if (component[0] == '/') {
 		// absolute path
