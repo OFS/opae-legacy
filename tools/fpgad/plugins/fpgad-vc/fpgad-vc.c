@@ -114,7 +114,6 @@ typedef struct _vc_device {
 	bool fpga_seu_err;
 	bool bmc_seu_err;
 	char sbdf[16];
-	uint16_t device_id;
 } vc_device;
 
 #define BIT_SET_MASK(__n)  (1 << ((__n) % 8))
@@ -825,34 +824,12 @@ STATIC void vc_handle_err_event(vc_device *vc)
 	fpga_properties props = NULL;
 	uint32_t num_errors;
 	struct fpga_error_info errinfo;
-	uint16_t seg = 0;
-	uint8_t bus = 0;
-	uint8_t dev = 0;
-	uint8_t fn = 0;
 	int i;
 
 	if (fpgaGetProperties(d->token, &props) != FPGA_OK) {
 		LOG("failed to get FPGA properties.\n");
 		return;
 	}
-
-	if (fpgaPropertiesGetDeviceID(props, &vc->device_id) != FPGA_OK) {
-		LOG("failed to get device ID.\n");
-		fpgaDestroyProperties(&props);
-		return;
-	}
-
-	if ((fpgaPropertiesGetSegment(props, &seg) != FPGA_OK) ||
-	    (fpgaPropertiesGetBus(props, &bus) != FPGA_OK) ||
-	    (fpgaPropertiesGetDevice(props, &dev) != FPGA_OK) ||
-	    (fpgaPropertiesGetFunction(props, &fn) != FPGA_OK)) {
-		LOG("failed to get PCI attributes.\n");
-		fpgaDestroyProperties(&props);
-		return;
-	}
-
-	snprintf(vc->sbdf, 16, "%04x:%02x:%02x.%d",
-		 (int)seg, (int)bus, (int)dev, (int)fn);
 
 	fpgaPropertiesGetNumErrors(props, &num_errors);
 	for (i = 0; i < (int)num_errors; i++) {
@@ -1209,6 +1186,11 @@ int fpgad_plugin_configure(fpgad_monitored_device *d,
 	d->type = FPGAD_PLUGIN_TYPE_THREAD;
 
 	if (d->object_type == FPGA_DEVICE) {
+		fpga_properties props = NULL;
+		uint16_t seg = 0;
+		uint8_t bus = 0;
+		uint8_t dev = 0;
+		uint8_t fn = 0;
 
 		d->thread_fn = monitor_fme_vc_thread;
 		d->thread_stop_fn = stop_vc_threads;
@@ -1220,21 +1202,42 @@ int fpgad_plugin_configure(fpgad_monitored_device *d,
 		vc->base_device = d;
 		d->thread_context = vc;
 
+		res = vc_parse_config(vc, cfg);
+		if (res) {
+			free(vc);
+			goto out_exit;
+		}
+
+		if (fpgaGetProperties(d->token, &props) != FPGA_OK) {
+			LOG("failed to get properties.\n");
+			goto out_exit;
+
+		}
+
+		if ((fpgaPropertiesGetSegment(props, &seg) != FPGA_OK) ||
+		    (fpgaPropertiesGetBus(props, &bus) != FPGA_OK) ||
+		    (fpgaPropertiesGetDevice(props, &dev) != FPGA_OK) ||
+		    (fpgaPropertiesGetFunction(props, &fn) != FPGA_OK)) {
+			LOG("failed to get PCI attributes.\n");
+			fpgaDestroyProperties(&props);
+			goto out_exit;
+		}
+
+		fpgaDestroyProperties(&props);
+
+		snprintf(vc->sbdf, sizeof(vc->sbdf), "%04x:%02x:%02x.%d",
+			 (int)seg, (int)bus, (int)dev, (int)fn);
+
 		LOG("monitoring vid=0x%04x did=0x%04x (%s)\n",
 			d->supported->vendor_id,
 			d->supported->device_id,
 			d->object_type == FPGA_ACCELERATOR ?
 			"accelerator" : "device");
 
-		res = vc_parse_config(vc, cfg);
-		if (res) {
-			free(vc);
-		}
-
 	}
 
 	// Not currently monitoring the Port device
-
+out_exit:
 	return res;
 }
 
