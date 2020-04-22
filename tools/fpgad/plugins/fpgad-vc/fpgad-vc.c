@@ -62,11 +62,10 @@ do { \
 
 
 typedef struct _vc_sensor {
-	fpga_object sensor_object;
-	char *name;
-	char *type;
 	uint64_t id;
 	fpga_object value_object;
+	char *name;
+	char *type;
 	uint64_t value;
 	uint64_t high_fatal;
 	uint64_t high_warn;
@@ -82,8 +81,9 @@ typedef struct _vc_sensor {
 #define FPGAD_SENSOR_VC_MAX_READ_ERRORS  25
 } vc_sensor;
 
+#define MAX_SENSOR_NAME 32
 typedef struct _vc_config_sensor {
-	uint64_t id;
+	char name[MAX_SENSOR_NAME];
 	uint64_t high_fatal;
 	uint64_t high_warn;
 	uint64_t low_fatal;
@@ -95,10 +95,8 @@ typedef struct _vc_config_sensor {
 #define MAX_VC_SENSORS 128
 typedef struct _vc_device {
 	fpgad_monitored_device *base_device;
-	fpga_object group_object;
 	vc_sensor sensors[MAX_VC_SENSORS];
 	uint32_t num_sensors;
-	uint64_t max_sensor_id;
 	uint8_t *state_tripped; // bit set
 	uint8_t *state_last;    // bit set
 	uint64_t tripped_count;
@@ -162,7 +160,6 @@ STATIC void stop_vc_threads(void)
 
 STATIC void vc_destroy_sensor(vc_sensor *sensor)
 {
-	fpgaDestroyObject(&sensor->sensor_object);
 	if (sensor->name) {
 		free(sensor->name);
 		sensor->name = NULL;
@@ -187,12 +184,6 @@ STATIC void vc_destroy_sensors(vc_device *vc)
 		vc_destroy_sensor(&vc->sensors[i]);
 	}
 	vc->num_sensors = 0;
-	vc->max_sensor_id = 0;
-
-	if (vc->group_object) {
-		fpgaDestroyObject(&vc->group_object);
-		vc->group_object = NULL;
-	}
 
 	if (vc->state_tripped) {
 		free(vc->state_tripped);
@@ -215,63 +206,6 @@ STATIC void vc_destroy_device(vc_device *vc)
 	}
 }
 
-STATIC fpga_result vc_sensor_get_string(vc_sensor *sensor,
-					const char *obj_name,
-					char **name)
-{
-	fpga_result res;
-	fpga_object obj = NULL;
-	char buf[SYSFS_PATH_MAX] = { 0, };
-	uint32_t len = 0;
-
-	res = fpgaObjectGetObject(sensor->sensor_object,
-				  obj_name,
-				  &obj,
-				  0);
-	if (res != FPGA_OK)
-		return res;
-
-	res = fpgaObjectGetSize(obj, &len, 0);
-	if (res != FPGA_OK)
-		goto out_free_obj;
-
-	res = fpgaObjectRead(obj, (uint8_t *)buf, 0, len, 0);
-	if (res != FPGA_OK)
-		goto out_free_obj;
-
-	if (buf[len-1] == '\n')
-		buf[len-1] = '\0';
-
-	*name = cstr_dup((const char *)buf);
-	if (!(*name))
-		res = FPGA_NO_MEMORY;
-
-out_free_obj:
-	fpgaDestroyObject(&obj);
-	return res;
-}
-
-STATIC fpga_result vc_sensor_get_u64(vc_sensor *sensor,
-				     const char *obj_name,
-				     uint64_t *value)
-{
-	fpga_result res;
-	fpga_object obj = NULL;
-
-	res = fpgaObjectGetObject(sensor->sensor_object,
-				  obj_name,
-				  &obj,
-				  0);
-	if (res != FPGA_OK)
-		return res;
-
-	res = fpgaObjectRead64(obj, value, 0);
-
-	fpgaDestroyObject(&obj);
-
-	return res;
-}
-
 // The percentage by which we adjust the power trip
 // points so that we catch anomolies before the hw does.
 #define VC_PERCENT_ADJUST_PWR 5
@@ -279,13 +213,19 @@ STATIC fpga_result vc_sensor_get_u64(vc_sensor *sensor,
 // temperature trip points so that we catch anomolies
 // before the hw does.
 #define VC_DEGREES_ADJUST_TEMP 5
-STATIC fpga_result vc_sensor_get(vc_device *vc, vc_sensor *s)
+STATIC fpga_result vc_sensor_get(vc_device *vc, char *label, vc_sensor *s)
 {
 	fpga_result res;
-	bool is_temperature;
-	int indicator = -1;
+	char *p;
+	int i;
+	bool is_temp;
+	char buf[SYSFS_PATH_MAX] = { 0, };
+	char path[SYSFS_PATH_MAX] = { 0, };
+	size_t len;
+	char *endptr;
 	vc_config_sensor *cfg_sensor = NULL;
-	uint32_t i;
+
+	s->flags = 0;
 
 	if (s->name) {
 		free(s->name);
@@ -297,67 +237,97 @@ STATIC fpga_result vc_sensor_get(vc_device *vc, vc_sensor *s)
 		s->type = NULL;
 	}
 
-	res = vc_sensor_get_string(s, "name", &s->name);
+	if (file_read_string(label, buf, sizeof(buf))) {
+		return FPGA_EXCEPTION;
+	}
+	s->name = cstr_dup(buf);
+	if (!s->name)
+		return FPGA_NO_MEMORY;
+
+	// Determine sensor type.
+	p = strrchr(label, '/') + 1;
+	if (!strncmp("curr", p, 4)) {
+		s->type = cstr_dup("Current");
+	} else if (!strncmp("in", p, 2)) {
+		s->type = cstr_dup("Voltage");
+	} else if (!strncmp("power", p, 5)) {
+		s->type = cstr_dup("Power");
+	} else if (!strncmp("temp", p, 4)) {
+		s->type = cstr_dup("Temperature");
+	} else {
+		s->type = cstr_dup("Unknown");
+	}
+
+	is_temp = (strcmp(s->type, "Temperature") == 0);
+
+	s->id = vc->num_sensors;
+
+	// Extract the FME-relative path, given label
+	// which is the full path through /sys/bus/pci/devices.
+	p = label;
+	for (i = 0 ; i < 8 ; ++i) {
+		p = strchr(p + 1, '/');
+	}
+	++p; // don't include the first '/'
+
+	len = strnlen(p, sizeof(buf) - 1);
+	memcpy(buf, p, len);
+	buf[len] = '\0';
+
+	strncpy(&buf[len - 5], "input", 6);
+
+	res = fpgaTokenGetObject(vc->base_device->token,
+				 buf,
+				 &s->value_object,
+				 0);
 	if (res != FPGA_OK)
 		return res;
 
-	res = vc_sensor_get_string(s, "type", &s->type);
+	res = fpgaObjectRead64(s->value_object,
+			       &s->value,
+			       FPGA_OBJECT_SYNC);
 	if (res != FPGA_OK)
 		return res;
 
-	res = vc_sensor_get_u64(s, "id", &s->id);
-	if (res != FPGA_OK)
-		return res;
+	len = strnlen(label, sizeof(path) - 1);
+	memcpy(path, label, len);
+	path[len] = '\0';
+	p = &path[len - 5];
 
-	res = fpgaObjectRead64(s->value_object, &s->value, 0);
-	if (res != FPGA_OK)
-		return res;
+	strncpy(p, "crit", 5);
+	s->flags &= ~FPGAD_SENSOR_VC_HIGH_FATAL_VALID;
+	if (!file_read_string(path, buf, sizeof(buf))) {
+		s->high_fatal = strtoul(buf, &endptr, 0);
+		if (endptr == buf + strlen(buf)) {
+			s->flags |= FPGAD_SENSOR_VC_HIGH_FATAL_VALID;
+			if (is_temp)
+				s->high_fatal -= VC_DEGREES_ADJUST_TEMP;
+			else
+				s->high_fatal -=
+					(s->high_fatal * VC_PERCENT_ADJUST_PWR) / 100;
+		}
+	}
 
-	indicator = strcmp(s->type, "Temperature");
-	is_temperature = (indicator == 0);
+	strncpy(p, "max", 4);
+	s->flags &= ~FPGAD_SENSOR_VC_HIGH_WARN_VALID;
+	if (!file_read_string(path, buf, sizeof(buf))) {
+		s->high_warn = strtoul(buf, &endptr, 0);
+		if (endptr == buf + strlen(buf))
+			s->flags |= FPGAD_SENSOR_VC_HIGH_WARN_VALID;
+	}
 
-	res = vc_sensor_get_u64(s, "high_fatal", &s->high_fatal);
-	if (res == FPGA_OK) {
-		s->flags |= FPGAD_SENSOR_VC_HIGH_FATAL_VALID;
-		if (is_temperature)
-			s->high_fatal -= VC_DEGREES_ADJUST_TEMP;
-		else
-			s->high_fatal -=
-				(s->high_fatal * VC_PERCENT_ADJUST_PWR) / 100;
-	} else
-		s->flags &= ~FPGAD_SENSOR_VC_HIGH_FATAL_VALID;
-
-	res = vc_sensor_get_u64(s, "high_warn", &s->high_warn);
-	if (res == FPGA_OK)
-		s->flags |= FPGAD_SENSOR_VC_HIGH_WARN_VALID;
-	else
-		s->flags &= ~FPGAD_SENSOR_VC_HIGH_WARN_VALID;
-
-	res = vc_sensor_get_u64(s, "low_fatal", &s->low_fatal);
-	if (res == FPGA_OK) {
-		s->flags |= FPGAD_SENSOR_VC_LOW_FATAL_VALID;
-		if (is_temperature)
-			s->low_fatal += VC_DEGREES_ADJUST_TEMP;
-		else
-			s->low_fatal +=
-				(s->low_fatal * VC_PERCENT_ADJUST_PWR) / 100;
-	} else
-		s->flags &= ~FPGAD_SENSOR_VC_LOW_FATAL_VALID;
-
-	res = vc_sensor_get_u64(s, "low_warn", &s->low_warn);
-	if (res == FPGA_OK)
-		s->flags |= FPGAD_SENSOR_VC_LOW_WARN_VALID;
-	else
-		s->flags &= ~FPGAD_SENSOR_VC_LOW_WARN_VALID;
+	// FPGAD_SENSOR_VC_LOW_FATAL_VALID
+	// FPGAD_SENSOR_VC_LOW_WARN_VALID
+	// dfl driver doesn't expose low warn nor low fatal values.
 
 	/* Do we have a user override (via the config) for
 	 * this sensor? If so, then honor it.
 	 */
-	for (i = 0 ; i < vc->num_config_sensors ; ++i) {
+	for (i = 0 ; i < (int)vc->num_config_sensors ; ++i) {
 		if (vc->config_sensors[i].flags &
 		    FPGAD_SENSOR_VC_IGNORE)
 			continue;
-		if (vc->config_sensors[i].id == s->id) {
+		if (!strcmp(vc->config_sensors[i].name, s->name)) {
 			cfg_sensor = &vc->config_sensors[i];
 			break;
 		}
@@ -420,7 +390,7 @@ STATIC fpga_result vc_sensor_get(vc_device *vc, vc_sensor *s)
 }
 
 STATIC fpga_result vc_enum_sensor(vc_device *vc,
-				  const char *name)
+				  char *label)
 {
 	fpga_result res;
 	vc_sensor *s;
@@ -432,26 +402,7 @@ STATIC fpga_result vc_enum_sensor(vc_device *vc,
 
 	s = &vc->sensors[vc->num_sensors];
 
-	res = fpgaObjectGetObject(vc->group_object,
-				  name,
-				  &s->sensor_object,
-				  0);
-
-	if (res != FPGA_OK)
-		return res;
-
-	res = fpgaObjectGetObject(s->sensor_object,
-				  "value",
-				  &s->value_object,
-				  0);
-
-	if (res != FPGA_OK) {
-		LOG("failed to get value object for %s.\n", name);
-		fpgaDestroyObject(&s->sensor_object);
-		return res;
-	}
-
-	res = vc_sensor_get(vc, s);
+	res = vc_sensor_get(vc, label, s);
 	if (res == FPGA_OK)
 		++vc->num_sensors;
 	else {
@@ -464,29 +415,40 @@ STATIC fpga_result vc_enum_sensor(vc_device *vc,
 
 STATIC fpga_result vc_enum_sensors(vc_device *vc)
 {
-	fpga_result res;
-	char name[SYSFS_PATH_MAX];
-	int i;
+	size_t i;
+	int ires;
+	char glob_pattern[SYSFS_PATH_MAX];
+	glob_t glob_data;
 
-	res = fpgaTokenGetObject(vc->base_device->token,
-				 "spi-altera.*.auto/spi_master/spi*/spi*.*",
-				 &vc->group_object,
-				 FPGA_OBJECT_GLOB);
-	if (res)
-		return res;
+	snprintf(glob_pattern, sizeof(glob_pattern),
+		 "/sys/bus/pci/devices/%s/fpga_region/region*/dfl-fme.*/"
+		 "dfl-fme.*.*/spi-altera.*.auto/spi_master/spi*/spi*.*/"
+		 "n3000bmc-hwmon.*.auto/hwmon/hwmon*/*_label",
+		 vc->sbdf);
 
-	for (i = 0 ; i < MAX_VC_SENSORS ; ++i) {
-		snprintf(name, sizeof(name), "sensor%d", i);
-		vc_enum_sensor(vc, name);
+	ires = glob(glob_pattern, GLOB_NOSORT, NULL, &glob_data);
+
+	if (ires) {
+		if (glob_data.gl_pathv)
+			globfree(&glob_data);
+
+		switch (ires) {
+		case GLOB_NOSPACE: return FPGA_NO_MEMORY;
+		case GLOB_ABORTED: return FPGA_EXCEPTION;
+		case GLOB_NOMATCH: return FPGA_NOT_FOUND;
+		default: return FPGA_EXCEPTION;
+		}
 	}
 
+	for (i = 0 ; i < glob_data.gl_pathc ; ++i) {
+		vc_enum_sensor(vc, glob_data.gl_pathv[i]);
+	}
+
+	globfree(&glob_data);
+
 	if (vc->num_sensors > 0) {
-		vc_sensor *s = &vc->sensors[vc->num_sensors - 1];
-
-		vc->max_sensor_id = s->id;
-
-		vc->state_tripped = calloc((vc->max_sensor_id + 7) / 8, 1);
-		vc->state_last = calloc((vc->max_sensor_id + 7) / 8, 1);
+		vc->state_tripped = calloc((vc->num_sensors + 7) / 8, 1);
+		vc->state_last = calloc((vc->num_sensors + 7) / 8, 1);
 
 		return (vc->state_tripped && vc->state_last) ?
 			FPGA_OK : FPGA_NO_MEMORY;
@@ -813,7 +775,7 @@ STATIC bool vc_monitor_sensors(vc_device *vc)
 			BIT_SET_CLR(vc->state_last, s->id);
 	}
 
-	memset(vc->state_tripped, 0, (vc->max_sensor_id + 7) / 8);
+	memset(vc->state_tripped, 0, (vc->num_sensors + 7) / 8);
 
 	return res;
 }
@@ -1079,31 +1041,36 @@ STATIC int vc_parse_config(vc_device *vc, const char *cfg)
 
 	for (i = 0 ; i < sensor_entries ; ++i) {
 		json_object *j_sensor_sub_i = json_object_array_get_idx(j_sensors, i);
-		json_object *j_id;
+		json_object *j_name;
 		json_object *j_high_fatal;
 		json_object *j_high_warn;
 		json_object *j_low_fatal;
 		json_object *j_low_warn;
+		size_t len;
 
 		if (!json_object_object_get_ex(j_sensor_sub_i,
-					       "id",
-					       &j_id)) {
-			LOG("failed to find id key in config sensors[%d].\n"
+					       "name",
+					       &j_name)) {
+			LOG("failed to find name key in config sensors[%d].\n"
 			    "Skipping entry %d.\n", i, i);
-			vc->config_sensors[i].id = MAX_VC_SENSORS;
+			vc->config_sensors[i].name[0] = '\0';
 			vc->config_sensors[i].flags = FPGAD_SENSOR_VC_IGNORE;
 			continue;
 		}
 
-		if (!json_object_is_type(j_id, json_type_int)) {
-			LOG("sensors[%d].id key not int.\n"
+		if (!json_object_is_type(j_name, json_type_string)) {
+			LOG("sensors[%d].name key not string.\n"
 			    "Skipping entry %d.\n", i, i);
-			vc->config_sensors[i].id = MAX_VC_SENSORS;
+			vc->config_sensors[i].name[0] = '\0';
 			vc->config_sensors[i].flags = FPGAD_SENSOR_VC_IGNORE;
 			continue;
 		}
 
-		vc->config_sensors[i].id = json_object_get_int(j_id);
+		len = strnlen(json_object_get_string(j_name), MAX_SENSOR_NAME - 1);
+		memcpy(vc->config_sensors[i].name,
+		       json_object_get_string(j_name),
+		       len);
+		vc->config_sensors[i].name[len] = '\0';
 
 		if (json_object_object_get_ex(j_sensor_sub_i,
 					      "high-fatal",
@@ -1115,8 +1082,8 @@ STATIC int vc_parse_config(vc_device *vc, const char *cfg)
 					* 1000.0);
 				vc->config_sensors[i].flags |=
 					FPGAD_SENSOR_VC_HIGH_FATAL_VALID;
-				LOG("user sensor%u high-fatal: %f\n",
-				    vc->config_sensors[i].id,
+				LOG("user \"%s\" high-fatal: %f\n",
+				    vc->config_sensors[i].name,
 				    json_object_get_double(j_high_fatal));
 			}
 		}
@@ -1131,8 +1098,8 @@ STATIC int vc_parse_config(vc_device *vc, const char *cfg)
 					* 1000.0);
 				vc->config_sensors[i].flags |=
 					FPGAD_SENSOR_VC_HIGH_WARN_VALID;
-				LOG("user sensor%u high-warn: %f\n",
-				    vc->config_sensors[i].id,
+				LOG("user \"%s\" high-warn: %f\n",
+				    vc->config_sensors[i].name,
 				    json_object_get_double(j_high_warn));
 			}
 		}
@@ -1147,8 +1114,8 @@ STATIC int vc_parse_config(vc_device *vc, const char *cfg)
 					* 1000.0);
 				vc->config_sensors[i].flags |=
 					FPGAD_SENSOR_VC_LOW_FATAL_VALID;
-				LOG("user sensor%u low-fatal: %f\n",
-				    vc->config_sensors[i].id,
+				LOG("user \"%s\" low-fatal: %f\n",
+				    vc->config_sensors[i].name,
 				    json_object_get_double(j_low_fatal));
 			}
 		}
@@ -1163,8 +1130,8 @@ STATIC int vc_parse_config(vc_device *vc, const char *cfg)
 					* 1000.0);
 				vc->config_sensors[i].flags |=
 					FPGAD_SENSOR_VC_LOW_WARN_VALID;
-				LOG("user sensor%u low-warn: %f\n",
-				    vc->config_sensors[i].id,
+				LOG("user \"%s\" low-warn: %f\n",
+				    vc->config_sensors[i].name,
 				    json_object_get_double(j_low_warn));
 			}
 		}
