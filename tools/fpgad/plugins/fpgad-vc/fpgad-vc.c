@@ -258,6 +258,9 @@ STATIC fpga_result vc_sensor_get(vc_device *vc, char *label, vc_sensor *s)
 		s->type = cstr_dup("Unknown");
 	}
 
+	if (!s->type)
+		return FPGA_NO_MEMORY;
+
 	is_temp = (strcmp(s->type, "Temperature") == 0);
 
 	s->id = vc->num_sensors;
@@ -280,8 +283,11 @@ STATIC fpga_result vc_sensor_get(vc_device *vc, char *label, vc_sensor *s)
 				 buf,
 				 &s->value_object,
 				 0);
-	if (res != FPGA_OK)
+	if (res != FPGA_OK) {
+		LOG("failed to acquire sensor object for "
+		    "\"%s\" at %s\n", s->name, buf);
 		return res;
+	}
 
 	res = fpgaObjectRead64(s->value_object,
 			       &s->value,
@@ -426,7 +432,7 @@ STATIC fpga_result vc_enum_sensors(vc_device *vc)
 		 "n3000bmc-hwmon.*.auto/hwmon/hwmon*/*_label",
 		 vc->sbdf);
 
-	ires = glob(glob_pattern, GLOB_NOSORT, NULL, &glob_data);
+	ires = glob(glob_pattern, 0, NULL, &glob_data);
 
 	if (ires) {
 		if (glob_data.gl_pathv)
@@ -459,9 +465,6 @@ STATIC fpga_result vc_enum_sensors(vc_device *vc)
 
 STATIC fpga_result vc_disable_aer(vc_device *vc)
 {
-	fpga_token token;
-	fpga_result res;
-	fpga_properties prop = NULL;
 	char path[PATH_MAX];
 	char rlpath[PATH_MAX];
 	char *p;
@@ -470,33 +473,9 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 	FILE *fp;
 	size_t sz;
 
-	uint16_t seg = 0;
-	uint8_t bus = 0;
-	uint8_t dev = 0;
-	uint8_t fn = 0;
-
-	token = vc->base_device->token;
-
-	res = fpgaGetProperties(token, &prop);
-	if (res != FPGA_OK) {
-		LOG("failed to get fpga properties.\n");
-		return res;
-	}
-
-	if ((fpgaPropertiesGetSegment(prop, &seg) != FPGA_OK) ||
-	    (fpgaPropertiesGetBus(prop, &bus) != FPGA_OK) ||
-	    (fpgaPropertiesGetDevice(prop, &dev) != FPGA_OK) ||
-	    (fpgaPropertiesGetFunction(prop, &fn) != FPGA_OK)) {
-		LOG("failed to get PCI attributes.\n");
-		fpgaDestroyProperties(&prop);
-		return FPGA_EXCEPTION;
-	}
-
-	fpgaDestroyProperties(&prop);
-
 	snprintf(path, sizeof(path),
-			"/sys/bus/pci/devices/%04x:%02x:%02x.%d",
-			(int)seg, (int)bus, (int)dev, (int)fn);
+		 "/sys/bus/pci/devices/%s",
+		 vc->sbdf);
 
 	memset(rlpath, 0, sizeof(rlpath));
 
@@ -593,42 +572,15 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 
 STATIC fpga_result vc_enable_aer(vc_device *vc)
 {
-	fpga_token token;
-	fpga_result res;
-	fpga_properties prop = NULL;
 	char path[PATH_MAX];
 	char rlpath[PATH_MAX];
 	char *p;
 	char cmd[256];
 	FILE *fp;
 
-	uint16_t seg = 0;
-	uint8_t bus = 0;
-	uint8_t dev = 0;
-	uint8_t fn = 0;
-
-	token = vc->base_device->token;
-
-	res = fpgaGetProperties(token, &prop);
-	if (res != FPGA_OK) {
-		LOG("failed to get fpga properties.\n");
-		return res;
-	}
-
-	if ((fpgaPropertiesGetSegment(prop, &seg) != FPGA_OK) ||
-	    (fpgaPropertiesGetBus(prop, &bus) != FPGA_OK) ||
-	    (fpgaPropertiesGetDevice(prop, &dev) != FPGA_OK) ||
-	    (fpgaPropertiesGetFunction(prop, &fn) != FPGA_OK)) {
-		LOG("failed to get PCI attributes.\n");
-		fpgaDestroyProperties(&prop);
-		return FPGA_EXCEPTION;
-	}
-
-	fpgaDestroyProperties(&prop);
-
 	snprintf(path, sizeof(path),
-			"/sys/bus/pci/devices/%04x:%02x:%02x.%d",
-			(int)seg, (int)bus, (int)dev, (int)fn);
+		 "/sys/bus/pci/devices/%s",
+		 vc->sbdf);
 
 	memset(rlpath, 0, sizeof(rlpath));
 
