@@ -23,9 +23,11 @@
 // CONTRACT,  STRICT LIABILITY,  OR TORT  (INCLUDING NEGLIGENCE  OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-//****************************************************************************
-//
-//****************************************************************************
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif // HAVE_CONFIG_H
+
 #ifndef __USE_GNU
    #define __USE_GNU
 #endif
@@ -52,7 +54,6 @@
 #define SYFS_PID_MAX_PATH                 "/proc/sys/kernel/pid_max"
 
 #define MSR_MAX_BUF_SIZE                  1024
-#define SYSFS_PATH_MAX                    256
 #define XEON_PWR_LIMIT                    "power_mgmt/xeon_limit"
 #define FPGA_PWR_LIMIT                    "power_mgmt/fpga_limit"
 #define FPGA_SYSFS_SOCKET_ID              "socket_id"

@@ -42,7 +42,6 @@
 #define LOG(format, ...) \
 log_printf("fpgad-vc: " format, ##__VA_ARGS__)
 
-#define SYSFS_PATH_MAX 256
 #define FME_ERR_NAME "errors"
 #define SEU_ERR_NAME "seu_emr"
 #define CATFATAL_ERR_NAME "catfatal_errors"
