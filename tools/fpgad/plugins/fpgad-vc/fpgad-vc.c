@@ -93,6 +93,7 @@ typedef struct _vc_config_sensor {
 
 #define MAX_SENSORS_ENUM_RETRIES 5
 #define MAX_VC_SENSORS 128
+#define MAX_AER_CMD 64
 typedef struct _vc_device {
 	fpgad_monitored_device *base_device;
 	vc_sensor sensors[MAX_VC_SENSORS];
@@ -102,6 +103,9 @@ typedef struct _vc_device {
 	uint64_t tripped_count;
 	uint32_t num_config_sensors;
 	vc_config_sensor *config_sensors;
+	char get_aer[2][MAX_AER_CMD];
+	char disable_aer[2][MAX_AER_CMD];
+	char set_aer[2][MAX_AER_CMD];
 	bool aer_disabled;
 	uint32_t previous_ecap_aer[2];
 	fpga_handle fpga_h;
@@ -498,11 +502,11 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 	// Save the current ECAP_AER values.
 
 	snprintf(cmd, sizeof(cmd),
-		      "setpci -s %s ECAP_AER+0x08.L", p);
+		 vc->get_aer[0], p);
 
 	fp = popen(cmd, "r");
 	if (!fp) {
-		LOG("failed to read ECAP_AER+0x08 for %s\n", p);
+		LOG("popen(\"%s\") failed\n", cmd);
 		return FPGA_EXCEPTION;
 	}
 
@@ -521,11 +525,11 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 
 
 	snprintf(cmd, sizeof(cmd),
-		      "setpci -s %s ECAP_AER+0x14.L", p);
+		 vc->get_aer[1], p);
 
 	fp = popen(cmd, "r");
 	if (!fp) {
-		LOG("failed to read ECAP_AER+0x14 for %s\n", p);
+		LOG("popen(\"%s\") failed\n", cmd);
 		return FPGA_EXCEPTION;
 	}
 
@@ -546,22 +550,22 @@ STATIC fpga_result vc_disable_aer(vc_device *vc)
 	// Disable AER.
 
 	snprintf(cmd, sizeof(cmd),
-		      "setpci -s %s ECAP_AER+0x08.L=0xffffffff", p);
+		 vc->disable_aer[0], p);
 
 	fp = popen(cmd, "r");
 	if (!fp) {
-		LOG("failed to write ECAP_AER+0x08 for %s\n", p);
+		LOG("popen(\"%s\") failed\n", cmd);
 		return FPGA_EXCEPTION;
 	}
 
 	pclose(fp);
 
 	snprintf(cmd, sizeof(cmd),
-		      "setpci -s %s ECAP_AER+0x14.L=0xffffffff", p);
+		 vc->disable_aer[1], p);
 
 	fp = popen(cmd, "r");
 	if (!fp) {
-		LOG("failed to write ECAP_AER+0x14 for %s\n", p);
+		LOG("popen(\"%s\") failed\n", cmd);
 		return FPGA_EXCEPTION;
 	}
 
@@ -603,12 +607,12 @@ STATIC fpga_result vc_enable_aer(vc_device *vc)
 	// Write the saved ECAP_AER values to enable AER.
 
 	snprintf(cmd, sizeof(cmd),
-		      "setpci -s %s ECAP_AER+0x08.L=0x%08x",
-		      p, vc->previous_ecap_aer[0]);
+		 vc->set_aer[0],
+		 p, vc->previous_ecap_aer[0]);
 
 	fp = popen(cmd, "r");
 	if (!fp) {
-		LOG("failed to write ECAP_AER+0x08 for %s\n", p);
+		LOG("popen(\"%s\") failed\n", cmd);
 		return FPGA_EXCEPTION;
 	}
 
@@ -619,12 +623,12 @@ STATIC fpga_result vc_enable_aer(vc_device *vc)
 
 
 	snprintf(cmd, sizeof(cmd),
-		      "setpci -s %s ECAP_AER+0x14.L=0x%08x",
-		      p, vc->previous_ecap_aer[1]);
+		 vc->set_aer[1],
+		 p, vc->previous_ecap_aer[1]);
 
 	fp = popen(cmd, "r");
 	if (!fp) {
-		LOG("failed to write ECAP_AER+0x14 for %s\n", p);
+		LOG("popen(\"%s\") failed\n", cmd);
 		return FPGA_EXCEPTION;
 	}
 
@@ -643,7 +647,7 @@ STATIC bool vc_monitor_sensors(vc_device *vc)
 	bool negative_trans = false;
 	bool res = true;
 
-	if (vc->num_sensors == 0) {		// no sensor found
+	if (vc->num_sensors == 0) { // no sensor found
 		return true;
 	}
 
@@ -909,11 +913,21 @@ STATIC int vc_parse_config(vc_device *vc, const char *cfg)
 	json_object *root;
 	enum json_tokener_error j_err = json_tokener_success;
 	json_object *j_cool_down = NULL;
+	json_object *j_get_aer = NULL;
+	json_object *j_get_aer_0 = NULL;
+	json_object *j_get_aer_1 = NULL;
+	json_object *j_disable_aer = NULL;
+	json_object *j_disable_aer_0 = NULL;
+	json_object *j_disable_aer_1 = NULL;
+	json_object *j_set_aer = NULL;
+	json_object *j_set_aer_0 = NULL;
+	json_object *j_set_aer_1 = NULL;
 	json_object *j_config_sensors_enabled = NULL;
 	json_object *j_sensors = NULL;
 	int res = 1;
 	int sensor_entries;
 	int i;
+	size_t len;
 
 	root = json_tokener_parse_verbose(cfg, &j_err);
 	if (!root) {
@@ -922,6 +936,7 @@ STATIC int vc_parse_config(vc_device *vc, const char *cfg)
 		return 1;
 	}
 
+	// cool-down
 	if (!json_object_object_get_ex(root,
 				       "cool-down",
 				       &j_cool_down)) {
@@ -939,6 +954,138 @@ STATIC int vc_parse_config(vc_device *vc, const char *cfg)
 		cool_down = 30;
 
 	LOG("set cool-down period to %d seconds.\n", cool_down);
+
+	// get-aer
+	if (!json_object_object_get_ex(root,
+				       "get-aer",
+				       &j_get_aer)) {
+		LOG("failed to find get-aer key in config.\n");
+		goto out_put;
+	}
+
+	if (!json_object_is_type(j_get_aer, json_type_array)) {
+		LOG("get-aer key not array.\n");
+		goto out_put;
+	}
+
+	if (json_object_array_length(j_get_aer) != 2) {
+		LOG("get-aer key expects two entries.\n");
+		goto out_put;
+	}
+
+	// get-aer[0]
+	j_get_aer_0 = json_object_array_get_idx(j_get_aer, 0);
+	if (!json_object_is_type(j_get_aer_0, json_type_string)) {
+		LOG("get-aer[0] key is not a string.\n");
+		goto out_put;
+	}
+
+	len = strnlen(json_object_get_string(j_get_aer_0), MAX_AER_CMD - 1);
+	memcpy(vc->get_aer[0],
+	       json_object_get_string(j_get_aer_0),
+	       len);
+	vc->get_aer[0][len] = '\0';
+
+	// get_aer[1]
+	j_get_aer_1 = json_object_array_get_idx(j_get_aer, 1);
+	if (!json_object_is_type(j_get_aer_1, json_type_string)) {
+		LOG("get-aer[1] key is not a string.\n");
+		goto out_put;
+	}
+
+	len = strnlen(json_object_get_string(j_get_aer_1), MAX_AER_CMD - 1);
+	memcpy(vc->get_aer[1],
+	       json_object_get_string(j_get_aer_1),
+	       len);
+	vc->get_aer[1][len] = '\0';
+
+	// disable-aer
+	if (!json_object_object_get_ex(root,
+				       "disable-aer",
+				       &j_disable_aer)) {
+		LOG("failed to find disable-aer key in config.\n");
+		goto out_put;
+	}
+
+	if (!json_object_is_type(j_disable_aer, json_type_array)) {
+		LOG("disable-aer key not array.\n");
+		goto out_put;
+	}
+
+	if (json_object_array_length(j_disable_aer) != 2) {
+		LOG("disable-aer key expects two entries.\n");
+		goto out_put;
+	}
+
+	// disable-aer[0]
+	j_disable_aer_0 = json_object_array_get_idx(j_disable_aer, 0);
+	if (!json_object_is_type(j_disable_aer_0, json_type_string)) {
+		LOG("disable-aer[0] key is not a string.\n");
+		goto out_put;
+	}
+
+	len = strnlen(json_object_get_string(j_disable_aer_0), MAX_AER_CMD - 1);
+	memcpy(vc->disable_aer[0],
+	       json_object_get_string(j_disable_aer_0),
+	       len);
+	vc->disable_aer[0][len] = '\0';
+
+	// disable-aer[1]
+	j_disable_aer_1 = json_object_array_get_idx(j_disable_aer, 1);
+	if (!json_object_is_type(j_disable_aer_1, json_type_string)) {
+		LOG("disable-aer[1] key is not a string.\n");
+		goto out_put;
+	}
+
+	len = strnlen(json_object_get_string(j_disable_aer_1), MAX_AER_CMD - 1);
+	memcpy(vc->disable_aer[1],
+	       json_object_get_string(j_disable_aer_1),
+	       len);
+	vc->disable_aer[1][len] = '\0';
+
+	// set-aer
+	if (!json_object_object_get_ex(root,
+				       "set-aer",
+				       &j_set_aer)) {
+		LOG("failed to find set-aer key in config.\n");
+		goto out_put;
+	}
+
+	if (!json_object_is_type(j_set_aer, json_type_array)) {
+		LOG("set-aer key not array.\n");
+		goto out_put;
+	}
+
+	if (json_object_array_length(j_set_aer) != 2) {
+		LOG("set-aer key expects two entries.\n");
+		goto out_put;
+	}
+
+	// set-aer[0]
+	j_set_aer_0 = json_object_array_get_idx(j_set_aer, 0);
+	if (!json_object_is_type(j_set_aer_0, json_type_string)) {
+		LOG("set-aer[0] key is not a string.\n");
+		goto out_put;
+	}
+
+	len = strnlen(json_object_get_string(j_set_aer_0), MAX_AER_CMD - 1);
+	memcpy(vc->set_aer[0],
+	       json_object_get_string(j_set_aer_0),
+	       len);
+	vc->set_aer[0][len] = '\0';
+
+	// set_aer[1]
+	j_set_aer_1 = json_object_array_get_idx(j_set_aer, 1);
+	if (!json_object_is_type(j_set_aer_1, json_type_string)) {
+		LOG("set-aer[1] key is not a string.\n");
+		goto out_put;
+	}
+
+	len = strnlen(json_object_get_string(j_set_aer_1), MAX_AER_CMD - 1);
+	memcpy(vc->set_aer[1],
+	       json_object_get_string(j_set_aer_1),
+	       len);
+	vc->set_aer[1][len] = '\0';
 
 	res = 0;
 
@@ -998,7 +1145,6 @@ STATIC int vc_parse_config(vc_device *vc, const char *cfg)
 		json_object *j_high_warn;
 		json_object *j_low_fatal;
 		json_object *j_low_warn;
-		size_t len;
 
 		if (!json_object_object_get_ex(j_sensor_sub_i,
 					       "name",
