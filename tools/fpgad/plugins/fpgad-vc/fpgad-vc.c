@@ -431,7 +431,7 @@ STATIC fpga_result vc_enum_sensors(vc_device *vc)
 
 	snprintf(glob_pattern, sizeof(glob_pattern),
 		 "/sys/bus/pci/devices/%s/fpga_region/region*/dfl-fme.*/"
-		 "dfl-fme.*.*/spi-altera.*.auto/spi_master/spi*/spi*.*/"
+		 "dfl-fme.*.*/subdev_spi_altera.*.auto/spi_master/spi*/spi*.*/"
 		 "n3000bmc-hwmon.*.auto/hwmon/hwmon*/*_label",
 		 vc->sbdf);
 
