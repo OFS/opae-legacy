@@ -28,7 +28,7 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(opae-legacy)
 
-add_subdirectory(tools)
+opae_add_subdirectory(tools)
 if(OPAE_BUILD_TESTS)
-    add_subdirectory(tests)
+    opae_add_subdirectory(tests)
 endif(OPAE_BUILD_TESTS)

@@ -24,9 +24,9 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-add_subdirectory(api)
-add_subdirectory(plugins/fpgad-xfpga)
-add_subdirectory(plugins/fpgad-vc)
+opae_add_subdirectory(api)
+opae_add_subdirectory(plugins/fpgad-xfpga)
+opae_add_subdirectory(plugins/fpgad-vc)
 
 opae_add_executable(TARGET fpgad
     SOURCE
