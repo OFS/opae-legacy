@@ -50,6 +50,7 @@ fpgad_supported_device default_supported_devices_table[] = {
 	{ 0x8086, 0xbcc1, "libfpgad-xfpga.so", 0, NULL, "" },
 	{ 0x8086, 0x0b30,    "libfpgad-vc.so", 0, NULL, "" },
 	{ 0x8086, 0x0b31,    "libfpgad-vc.so", 0, NULL, "" },
+	{ 0x8086, 0xaf00,    "libfpgad-vc.so", 0, NULL, "" },
 	{      0,      0,                NULL, 0, NULL, "" },
 };
 
