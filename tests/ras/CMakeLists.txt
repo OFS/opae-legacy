@@ -24,12 +24,23 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-opae_add_subdirectory(fpgad)
+opae_test_add_static_lib(TARGET ras-static
+    SOURCE  ${opae-legacy_ROOT}/tools/ras/main.c
+    LIBS
+        argsfilter
+        opae-c
+)
 
-if(OPAE_BUILD_LEGACY_TOOLS_RAS)
-    opae_add_subdirectory(ras)
-endif()
+target_include_directories(ras-static
+    PRIVATE
+        ${OPAE_SDK_SOURCE}/tools/argsfilter
+)
 
-if(OPAE_BUILD_LEGACY_TOOLS_COREIDLE)
-    opae_add_subdirectory(coreidle)
-endif()
+target_compile_definitions(ras-static
+    PRIVATE main=ras_main)
+
+opae_test_add(TARGET test_ras_c
+    SOURCE test_main_c.cpp
+    LIBS ras-static
+)
+
