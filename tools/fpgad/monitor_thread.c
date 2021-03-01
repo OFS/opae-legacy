@@ -1,4 +1,4 @@
-// Copyright(c) 2018-2019, Intel Corporation
+// Copyright(c) 2018-2021, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -110,7 +110,7 @@ STATIC void mon_monitor(fpgad_monitored_device *d)
 	}
 }
 
-STATIC volatile bool mon_is_ready = false;
+STATIC volatile bool mon_is_ready = (bool)0;
 
 bool monitor_is_ready(void)
 {
