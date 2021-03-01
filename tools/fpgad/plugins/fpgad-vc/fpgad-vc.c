@@ -1,4 +1,4 @@
-// Copyright(c) 2019-2020, Intel Corporation
+// Copyright(c) 2019-2021, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -431,7 +431,7 @@ STATIC fpga_result vc_enum_sensors(vc_device *vc)
 
 	snprintf(glob_pattern, sizeof(glob_pattern),
 		 "/sys/bus/pci/devices/%s/fpga_region/region*/dfl-fme.*/"
-		 "dfl-fme.*.*/subdev_spi_altera.*.auto/spi_master/spi*/spi*.*/"
+		 "dfl_dev.*/subdev_spi_altera.*.auto/spi_master/spi*/spi*.*/"
 		 "*-hwmon.*.auto/hwmon/hwmon*/*_label",
 		 vc->sbdf);
 
