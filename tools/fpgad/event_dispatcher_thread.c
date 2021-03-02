@@ -1,4 +1,4 @@
-// Copyright(c) 2018-2020, Intel Corporation
+// Copyright(c) 2018-2021, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -81,7 +81,7 @@ STATIC void evt_queue_destroy(evt_dispatch_queue *q)
 	q->head = q->tail = 0;
 }
 
-STATIC volatile bool dispatcher_is_ready = false;
+STATIC volatile bool dispatcher_is_ready = (bool)0;
 
 bool evt_dispatcher_is_ready(void)
 {
