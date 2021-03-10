@@ -307,7 +307,8 @@ STATIC fpga_result vc_sensor_get(vc_device *vc, char *label, vc_sensor *s)
 	s->flags &= ~FPGAD_SENSOR_VC_HIGH_FATAL_VALID;
 	if (!file_read_string(path, buf, sizeof(buf))) {
 		s->high_fatal = strtoul(buf, &endptr, 0);
-		if (endptr == buf + strlen(buf)) {
+		if ((endptr == buf + strlen(buf)) &&
+		    (s->high_fatal >= VC_DEGREES_ADJUST_TEMP)) {
 			s->flags |= FPGAD_SENSOR_VC_HIGH_FATAL_VALID;
 			if (is_temp)
 				s->high_fatal -= VC_DEGREES_ADJUST_TEMP;
