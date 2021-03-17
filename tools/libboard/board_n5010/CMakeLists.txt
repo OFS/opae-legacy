@@ -1,4 +1,5 @@
-## Copyright(c) 2019-2020, Intel Corporation
+## Original work Copyright(c) 2019-2020, Intel Corporation
+## Modifications Copyright(c) 2021, Silicom Denmark A/S
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -24,7 +25,16 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-opae_add_static_library(TARGET board_common
-    SOURCE board_common.c
-    LIBS opae-c
+opae_add_module_library(TARGET board_n5010
+    SOURCE board_n5010.c
+    LIBS
+        ${CMAKE_THREAD_LIBS_INIT}
+        opae-c
+        board_common
+    COMPONENT opaeboardlib
+)
+
+target_include_directories(board_n5010
+    PRIVATE
+        ${OPAE_SDK_SOURCE}/libboard/board_common
 )
