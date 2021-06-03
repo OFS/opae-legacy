@@ -199,15 +199,15 @@ STATIC bool mon_consider_device(struct fpgad_config *c, fpga_token token)
 				LOG("failed to get parent properties\n");
 				goto err_out_destroy;
 			}
-	
+
 			res = fpgaPropertiesGetGUID(parent_props, &pr_ifc_id);
 			if (res != FPGA_OK) {
 				LOG("failed to get PR interface ID\n");
 				goto err_out_destroy;
 			}
-	
+
 			fpgaDestroyProperties(&parent_props);
-	
+
 			for (i = 0 ; i < c->num_null_gbs ; ++i) {
 				if (!uuid_compare(c->null_gbs[i].pr_interface_id,
 						  pr_ifc_id)) {
