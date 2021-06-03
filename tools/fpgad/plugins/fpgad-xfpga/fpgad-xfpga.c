@@ -412,7 +412,7 @@ void fpgad_xfpga_respond_AP6_and_Null_GBS(fpgad_monitored_device *d,
 		if (res != FPGA_OK) {
 			LOG("(AP6) failed to get FME handle! : %s\n",
 			    fpgaErrStr(res));
-			goto out_destroy_fme_tok;
+			goto out_destroy_props;
 		}
 
 		LOG("programming \"%s\": ", d->bitstr->filename);
@@ -428,8 +428,7 @@ void fpgad_xfpga_respond_AP6_and_Null_GBS(fpgad_monitored_device *d,
 			LOG("FAILED : %s\n", fpgaErrStr(res));
 
 		fpgaClose(fme_h);
-out_destroy_fme_tok:
-		fpgaDestroyToken(&fme_tok);
+
 out_destroy_props:
 		fpgaDestroyProperties(&prop);
 	} else
