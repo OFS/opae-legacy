@@ -422,6 +422,15 @@ STATIC fpga_result vc_enum_sensor(vc_device *vc,
 	return res;
 }
 
+STATIC const char *glob_patterns[] = {
+	"/sys/bus/pci/devices/%s/fpga_region/region*/dfl-fme.*/"
+	"dfl_dev.*/subdev_spi_altera.*.auto/spi_master/spi*/spi*.*/"
+	"*-hwmon.*.auto/hwmon/hwmon*/*_label",
+	"/sys/bus/pci/devices/%s/fpga_region/region*/dfl-fme.*/"
+	"dfl_dev.*/*-hwmon.*.auto/hwmon/hwmon*/*_label",
+	NULL
+};
+
 STATIC fpga_result vc_enum_sensors(vc_device *vc)
 {
 	size_t i;
@@ -429,25 +438,23 @@ STATIC fpga_result vc_enum_sensors(vc_device *vc)
 	char glob_pattern[SYSFS_PATH_MAX];
 	glob_t glob_data;
 
-	snprintf(glob_pattern, sizeof(glob_pattern),
-		 "/sys/bus/pci/devices/%s/fpga_region/region*/dfl-fme.*/"
-		 "dfl_dev.*/subdev_spi_altera.*.auto/spi_master/spi*/spi*.*/"
-		 "*-hwmon.*.auto/hwmon/hwmon*/*_label",
-		 vc->sbdf);
+	for (i = 0 ; glob_patterns[i] ; ++i) {
+		snprintf(glob_pattern, sizeof(glob_pattern),
+			 glob_patterns[i], vc->sbdf);
 
-	ires = glob(glob_pattern, 0, NULL, &glob_data);
+		ires = glob(glob_pattern, 0, NULL, &glob_data);
 
-	if (ires) {
-		if (glob_data.gl_pathv)
-			globfree(&glob_data);
-
-		switch (ires) {
-		case GLOB_NOSPACE: return FPGA_NO_MEMORY;
-		case GLOB_ABORTED: return FPGA_EXCEPTION;
-		case GLOB_NOMATCH: return FPGA_NOT_FOUND;
-		default: return FPGA_EXCEPTION;
+		if (ires) {
+			if (glob_data.gl_pathv)
+				globfree(&glob_data);
+			continue;
 		}
+
+		break;
 	}
+
+	if (!glob_patterns[i])
+		return FPGA_NOT_FOUND;
 
 	for (i = 0 ; i < glob_data.gl_pathc ; ++i) {
 		vc_enum_sensor(vc, glob_data.gl_pathv[i]);
