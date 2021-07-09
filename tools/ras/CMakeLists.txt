@@ -1,4 +1,4 @@
-## Copyright(c) 2020, Intel Corporation
+## Copyright(c) 2017-2021, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -24,12 +24,17 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-opae_add_subdirectory(fpgad)
+opae_add_executable(TARGET ras
+    SOURCE main.c
+    LIBS
+        argsfilter
+        bitstream
+        opae-c
+        ${libjson-c_LIBRARIES}
+    COMPONENT toolras
+)
 
-if(OPAE_BUILD_LEGACY_TOOLS_RAS)
-    opae_add_subdirectory(ras)
-endif()
-
-if(OPAE_BUILD_LEGACY_TOOLS_COREIDLE)
-    opae_add_subdirectory(coreidle)
-endif()
+target_include_directories(ras
+    PRIVATE
+        ${OPAE_SDK_SOURCE}/tools/argsfilter
+)

@@ -28,6 +28,12 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(opae-legacy)
 
+option(OPAE_BUILD_LEGACY_TOOLS_RAS "Enable building legacy tool ras" OFF)
+mark_as_advanced(OPAE_BUILD_LEGACY_TOOLS_RAS)
+
+option(OPAE_BUILD_LEGACY_TOOLS_COREIDLE "Enable building legacy tool coreidle" OFF)
+mark_as_advanced(OPAE_BUILD_LEGACY_TOOLS_COREIDLE)
+
 opae_add_subdirectory(tools)
 if(OPAE_BUILD_TESTS)
     opae_add_subdirectory(tests)
