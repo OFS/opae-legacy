@@ -1,4 +1,4 @@
-## Copyright(c) 2020-2022, Intel Corporation
+## Copyright(c) 2021-2022, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -24,7 +24,13 @@
 ## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE
 ## POSSIBILITY OF SUCH DAMAGE.
 
-opae_add_subdirectory(coreidle)
-opae_add_subdirectory(fpgad)
-opae_add_subdirectory(hssi)
-opae_add_subdirectory(fpgaperf_counter)
+opae_add_shared_library(TARGET fpgaperf_counter
+    SOURCE fpgaperf_counter.c
+    LIBS
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${LIBUDEV_LIBRARIES}
+        opae-c
+    COMPONENT opaesamplelib
+)
+
+target_include_directories(fpgaperf_counter PRIVATE ${OPAE_LIB_SOURCE}/libopae-c)
