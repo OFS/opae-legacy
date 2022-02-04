@@ -1,4 +1,4 @@
-## Copyright(c) 2020, Intel Corporation
+## Copyright(c) 2020-2022, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -25,4 +25,4 @@
 ## POSSIBILITY OF SUCH DAMAGE.
 
 opae_add_subdirectory(coreidle)
-opae_add_subdirectory(fpgad)
+opae_add_subdirectory(fpgaperf)
