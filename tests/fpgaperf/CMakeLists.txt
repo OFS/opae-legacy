@@ -1,4 +1,4 @@
-## Copyright(c) 2021, Intel Corporation
+## Copyright(c) 2021-2022, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -25,7 +25,7 @@
 ## POSSIBILITY OF SUCH DAMAGE.
 
 opae_test_add_static_lib(TARGET fpgaperf-static
-    SOURCE ${OPAE_SDK_SOURCE}/samples/fpgaperf_counter/fpgaperf_counter.c
+    SOURCE ${OPAE_LEGACY_SOURCE}/tools/fpgaperf_counter/fpgaperf_counter.c
     LIBS
         ${LIBUDEV_LIBRARIES}
         opae-c
@@ -38,5 +38,5 @@ opae_test_add(TARGET test_fpgaperf_c
 )
 
 target_include_directories(test_fpgaperf_c
-    PRIVATE ${OPAE_SDK_SOURCE}/samples/fpgaperf_counter
+    PRIVATE ${OPAE_LEGACY_SOURCE}/tools/fpgaperf_counter
 )

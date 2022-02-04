@@ -1,4 +1,4 @@
-## Copyright(c) 2017-2020, Intel Corporation
+## Copyright(c) 2017-2022, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -56,7 +56,7 @@ opae_add_shared_library(TARGET hssi-io
 
 target_include_directories(hssi-io
     PRIVATE
-        ${OPAE_SDK_SOURCE}/tools/extra/c++utils
+        ${OPAE_SDK_SOURCE}/libraries/c++utils
 )
 
 set_target_properties(hssi-io
@@ -85,7 +85,7 @@ opae_add_executable(TARGET hssi_loopback
 
 target_include_directories(hssi_loopback
     PRIVATE
-        ${OPAE_SDK_SOURCE}/tools/extra/c++utils
+        ${OPAE_SDK_SOURCE}/libraries/c++utils
 )
 
 set_target_properties(hssi_loopback
@@ -106,7 +106,7 @@ opae_add_executable(TARGET hssi_config
 
 target_include_directories(hssi_config
     PRIVATE
-        ${OPAE_SDK_SOURCE}/tools/extra/c++utils
+        ${OPAE_SDK_SOURCE}/libraries/c++utils
 )
 
 set_target_properties(hssi_config
