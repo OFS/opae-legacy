@@ -25,5 +25,5 @@
 ## POSSIBILITY OF SUCH DAMAGE.
 
 opae_add_subdirectory(coreidle)
-opae_add_subdirectory(fpgaperf_counter)
+#opae_add_subdirectory(fpgaperf_counter)
 opae_add_subdirectory(hssi)
