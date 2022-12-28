@@ -121,7 +121,7 @@ STATIC fpga_result parse_perf_attributes(struct udev_device *dev,
 	size_t i				= 0;
 	FILE *file				= NULL;
 	glob_t pglob;
-	regmatch_t f_matches[3]			= { {0} };
+	regmatch_t f_matches[4]			= { {0} };
 	regmatch_t e_matches[4]			= { {0} };
 
 	if (!dev || !fpga_perf) {
