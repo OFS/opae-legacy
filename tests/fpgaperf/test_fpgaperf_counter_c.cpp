@@ -1,4 +1,4 @@
-// Copyright(c) 2021, Intel Corporation
+// Copyright(c) 2021-2022, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -190,5 +190,6 @@ TEST_P(fpgaperf_counter_c_p, fpgaperf_4) {
 	EXPECT_EQ(fpgaPerfCounterDestroy(fpga_perf), FPGA_OK);
 }
 
-INSTANTIATE_TEST_CASE_P(fpgaperf_counter_c, fpgaperf_counter_c_p,
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(fpgaperf_counter_c_p);
+INSTANTIATE_TEST_SUITE_P(fpgaperf_counter_c, fpgaperf_counter_c_p,
 	::testing::ValuesIn(test_platform::hw_platforms({ "dfl-n3000", "dfl-d5005" })));

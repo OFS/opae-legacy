@@ -1,4 +1,4 @@
-// Copyright(c) 2018, Intel Corporation
+// Copyright(c) 2018-2022, Intel Corporation
 //
 // Redistribution  and  use  in source  and  binary  forms,  with  or  without
 // modification, are permitted provided that the following conditions are met:
@@ -230,8 +230,9 @@ TEST_P(coreidle_coreidle_c_p, cpu_setaff3) {
   EXPECT_EQ(cpuset_setaffinity(0, 0, 0), FPGA_OK);
 }
 
-INSTANTIATE_TEST_CASE_P(coreidle_coreidle_c, coreidle_coreidle_c_p,
-                        ::testing::ValuesIn(test_platform::platforms({"skx-p"})));
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(coreidle_coreidle_c_p);
+INSTANTIATE_TEST_SUITE_P(coreidle_coreidle_c, coreidle_coreidle_c_p,
+                         ::testing::ValuesIn(test_platform::platforms({"skx-p"})));
 
 class coreidle_coreidle_c_mock_p : public coreidle_coreidle_c_p {
   protected:
@@ -314,7 +315,6 @@ TEST_P(coreidle_coreidle_c_mock_p, set_cpu2) {
   set_xeon_limit(xeon_limit);
 }
 
-INSTANTIATE_TEST_CASE_P(coreidle_coreidle_c, coreidle_coreidle_c_mock_p,
-                        ::testing::ValuesIn(test_platform::mock_platforms({"skx-p"})));
-
-
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(coreidle_coreidle_c_mock_p);
+INSTANTIATE_TEST_SUITE_P(coreidle_coreidle_c, coreidle_coreidle_c_mock_p,
+                         ::testing::ValuesIn(test_platform::mock_platforms({"skx-p"})));
