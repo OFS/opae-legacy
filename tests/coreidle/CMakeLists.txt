@@ -1,4 +1,4 @@
-## Copyright(c) 2020, Intel Corporation
+## Copyright(c) 2020-2023, Intel Corporation
 ##
 ## Redistribution  and  use  in source  and  binary  forms,  with  or  without
 ## modification, are permitted provided that the following conditions are met:
@@ -45,5 +45,5 @@ opae_test_add(TARGET test_coreidle_main_c
     LIBS
         coreidle-static
         bitstream
-        ${libjson-c_LIBRARIES}
+        ${json-c_LIBRARIES}
 )
